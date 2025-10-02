@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DoodStream File Uploader - 01 dev</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎮 DoodStream File Uploader</h1>
+            <p>Upload your gaming content and files to DoodStream</p>
+            <div class="dev-credit">Built by 01 dev</div>
+        </header>
+
+        <main>
+            <div class="upload-section">
+                <div class="api-config">
+                    <label for="apiKey">API Key:</label>
+                    <input type="password" id="apiKey" placeholder="Enter your DoodAPI key" value="110883xrshuvknjfcmjy36">
+                    <button type="button" id="toggleKey">👁️</button>
+                </div>
+
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">📁</div>
+                    <h3>Drop files here or click to select</h3>
+                    <p>Supported formats: MP4, AVI, MKV, ZIP, RAR and more</p>
+                    <input type="file" id="fileInput" multiple accept="video/*,audio/*,image/*,.zip,.rar">
+                    
+                    <div class="upload-progress-overlay" id="progressOverlay">
+                        <div class="circular-progress"></div>
+                        <div class="progress-text" id="progressText">Preparing upload...</div>
+                        <div class="progress-detail" id="progressDetail">Getting server information...</div>
+                    </div>
+                </div>
+
+                <div class="file-list" id="fileList"></div>
+
+                <div class="upload-controls">
+                    <button id="uploadBtn" disabled>🚀 Start Upload</button>
+                    <button id="clearBtn">🗑️ Clear All</button>
+                    <button id="retryBtn" style="display: none;">🔁 Retry Failed</button>
+                </div>
+
+                <div class="analytics-section">
+                    <h4>Upload Analytics</h4>
+                    <div class="analytics-display" id="analyticsDisplay">
+                        <div class="analytics-grid">
+                            <div class="metric">
+                                <span class="metric-value">0</span>
+                                <span class="metric-label">Total Files</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-value">0</span>
+                                <span class="metric-label">Ready</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="status-section">
+                <h3>Upload Status</h3>
+                <div class="status-display" id="statusDisplay">
+                    <p>Ready to upload files...</p>
+                </div>
+            </div>
+
+            <div class="results-section">
+                <h3>Upload Results</h3>
+                <div class="results-controls">
+                    <button id="copyAllLinks" class="copy-btn">📋 Copy All Links</button>
+                    <button id="copyAllEmbeds" class="copy-btn">🎬 Copy All Embeds</button>
+                    <button id="exportResults" class="copy-btn">📄 Export Results</button>
+                </div>
+                <div class="results-list" id="resultsList"></div>
+            </div>
+        </main>
+
+        <footer>
+            <div class="api-info">
+                <h4>Rate Limit: 10 requests/second | Advanced AI Research Project</h4>
+                <p>Advanced research project evaluating AI-assisted coding capabilities - Built by 01 dev</p>
+                <div class="keyboard-shortcuts">
+                    <strong>Keyboard Shortcuts:</strong>
+                    <span>Ctrl+U: Upload</span> |
+                    <span>Ctrl+D: Clear</span> |
+                    <span>Ctrl+A: Select Files</span> |
+                    <span>Esc: Cancel</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="toast"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>

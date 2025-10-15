@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Language Detection Test</title>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #0f172a;
+            color: #edf3ff;
+            padding: 20px;
+            margin: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            color: #6366f1;
+        }
+        .test-area {
+            background-color: #1e293b;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+            background-color: #334155;
+            color: #edf3ff;
+            border: 1px solid #475569;
+            border-radius: 5px;
+            padding: 10px;
+            font-family: inherit;
+            margin-bottom: 10px;
+        }
+        button {
+            background-color: #4f46e5;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        button:hover {
+            background-color: #4338ca;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #334155;
+            border-radius: 5px;
+            display: none;
+        }
+        .result.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Language Detection Test</h1>
+        <div class="test-area">
+            <textarea id="textInput" placeholder="Enter text in any language to detect..."></textarea>
+            <button id="detectBtn">Detect Language</button>
+        </div>
+        <div id="result" class="result">
+            <h3>Detected Language:</h3>
+            <p id="languageResult"></p>
+        </div>
+    </div>
+
+    <script>
+        // Language detection function (same as in the main script)
+        const detectLanguage = (text) => {
+          // Remove extra whitespace and get a clean text sample
+          const cleanText = text.trim().toLowerCase();
+          
+          // If text is empty, return default
+          if (cleanText.length === 0) return 'Unknown';
+          
+          // Define regex patterns for different scripts and languages
+          const arabicRegex = /[\u0600-\u06FF]/g;
+          const kurdishSoraniSpecific = /[\u0698\u06A9\u06AF\u067E\u0686]/g; // Specific Kurdish characters
+          const englishRegex = /[a-zA-Z]/g;
+          
+          // Common words for language detection
+          const englishCommonWords = ['the', 'and', 'or', 'but', 'is', 'are', 'was', 'were', 'be', 'been', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might', 'can', 'must'];
+          const arabicCommonWords = ['الذي', 'التي', 'أن', 'إن', 'من', 'على', 'في', 'إلى', 'عن', 'على', 'مع', 'بعد', 'قبل', 'أثناء', 'منذ', 'لأن', 'حتى', 'كل', 'جميع', 'بعض', 'أي', 'ما', 'كيف', 'متى', 'أين', 'почему', 'كак', 'что', 'кто'];
+          
+          // Check for Kurdish (Sorani) first as it uses Arabic script with specific characters
+          const kurdishChars = cleanText.match(kurdishSoraniSpecific);
+          if (kurdishChars && kurdishChars.length > 0) {
+            return 'Kurdish (Sorani)';
+          }
+          
+          // Check for Arabic script
+          const arabicChars = cleanText.match(arabicRegex);
+          if (arabicChars && arabicChars.length > 3) { // At least 3 Arabic characters to be considered Arabic
+            // Check for common Arabic words
+            const arabicWords = arabicCommonWords.some(word => cleanText.includes(word));
+            if (arabicWords) {
+              return 'Arabic';
+            }
+            return 'Arabic';
+          }
+          
+          // Check for English/Latin script
+          const englishChars = cleanText.match(englishRegex);
+          if (englishChars && englishChars.length > 3) { // At least 3 English characters
+            // Check for common English words
+            const englishWords = englishCommonWords.some(word => cleanText.includes(word));
+            if (englishWords) {
+              return 'English';
+            }
+            return 'English';
+          }
+          
+          // Default to Unknown for ambiguous cases
+          return 'Unknown';
+        };
+
+        // DOM elements
+        const textInput = document.getElementById('textInput');
+        const detectBtn = document.getElementById('detectBtn');
+        const result = document.getElementById('result');
+        const languageResult = document.getElementById('languageResult');
+
+        // Event listener for the detect button
+        detectBtn.addEventListener('click', () => {
+            const text = textInput.value;
+            const language = detectLanguage(text);
+            
+            languageResult.textContent = language;
+            result.classList.add('show');
+        });
+
+        // Test cases
+        const testCases = [
+            { text: "Hello, how are you today?", expected: "English" },
+            { text: "مرحبا، كيف حالك اليوم؟", expected: "Arabic" },
+            { text: "سڵاو، چۆنی؟", expected: "Kurdish (Sorani)" },
+            { text: "The quick brown fox jumps over the lazy dog", expected: "English" },
+            { text: "الfox البني السريع يقفز فوق الكلب الكسول", expected: "Arabic" }
+        ];
+
+        // Run tests on page load
+        window.addEventListener('load', () => {
+            console.log("Running language detection tests...");
+            testCases.forEach((testCase, index) => {
+                const detected = detectLanguage(testCase.text);
+                console.log(`Test ${index + 1}: "${testCase.text}"`);
+                console.log(`Expected: ${testCase.expected}, Detected: ${detected}`);
+                console.log(`Result: ${detected === testCase.expected ? 'PASS' : 'FAIL'}`);
+            });
+        });
+    </script>
+</body>
+</html>

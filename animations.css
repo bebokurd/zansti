@@ -1,0 +1,259 @@
+/* Additional animations for enhanced visual effects */
+
+/* Enhanced glow effect for buttons */
+.glow-effect-enhanced {
+  animation: glowEnhanced 2s ease-in-out infinite alternate;
+}
+
+@keyframes glowEnhanced {
+  0% {
+    box-shadow: 0 0 5px rgba(99, 102, 241, 0.5);
+  }
+  100% {
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.8), 0 0 30px rgba(139, 92, 246, 0.6);
+  }
+}
+
+/* Pulsing effect for avatars */
+.avatar.pulse {
+  animation: avatarPulse 2s infinite;
+}
+
+@keyframes avatarPulse {
+  0% {
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+  }
+  50% {
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+  }
+  100% {
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+  }
+}
+
+/* Wave animation for text */
+.wave-animation {
+  display: inline-block;
+  animation: wave 2s ease-in-out infinite;
+}
+
+@keyframes wave {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  25% {
+    transform: translateY(-5px);
+  }
+  75% {
+    transform: translateY(5px);
+  }
+}
+
+/* Rotation animation */
+.rotate-animation {
+  animation: rotateAnim 4s linear infinite;
+}
+
+@keyframes rotateAnim {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Scale animation */
+.scale-animation {
+  animation: scaleAnim 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes scaleAnim {
+  0% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(1.05);
+  }
+}
+
+/* Fade in with slide effect */
+.fade-slide-in {
+  animation: fadeSlideIn 0.5s ease-out forwards;
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+@keyframes fadeSlideIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Shimmer effect for text */
+.shimmer-text {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  background-repeat: no-repeat;
+  background-size: 800px 100%;
+  animation: shimmer 2s infinite;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -800px 0;
+  }
+  100% {
+    background-position: 800px 0;
+  }
+}
+
+/* Bounce effect for buttons */
+.bounce-effect {
+  animation: bounceEffect 1s infinite;
+}
+
+@keyframes bounceEffect {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Ripple effect for buttons */
+.ripple-effect {
+  position: relative;
+  overflow: hidden;
+}
+
+.ripple-effect::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.5);
+  opacity: 0;
+  border-radius: 100%;
+  transform: scale(1, 1) translate(-50%);
+  transform-origin: 50% 50%;
+}
+
+.ripple-effect:focus:not(:active)::after {
+  animation: ripple 1s ease-out;
+}
+
+@keyframes ripple {
+  0% {
+    transform: scale(0, 0);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(50, 50);
+    opacity: 0;
+  }
+}
+
+/* Floating effect for cards */
+.floating-card {
+  animation: floatingCard 3s ease-in-out infinite;
+}
+
+@keyframes floatingCard {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-15px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+/* Gradient border effect */
+.gradient-border {
+  position: relative;
+  border: none;
+  background: linear-gradient(var(--primary-color), var(--primary-color)) padding-box,
+              linear-gradient(45deg, var(--gradient-start), var(--gradient-middle), var(--gradient-end)) border-box;
+  border-radius: 20px;
+  border: 2px solid transparent;
+  animation: gradientBorder 3s ease infinite;
+}
+
+@keyframes gradientBorder {
+  0% {
+    background: linear-gradient(var(--primary-color), var(--primary-color)) padding-box,
+                linear-gradient(45deg, var(--gradient-start), var(--gradient-middle), var(--gradient-end)) border-box;
+  }
+  50% {
+    background: linear-gradient(var(--primary-color), var(--primary-color)) padding-box,
+                linear-gradient(45deg, var(--gradient-end), var(--gradient-start), var(--gradient-middle)) border-box;
+  }
+  100% {
+    background: linear-gradient(var(--primary-color), var(--primary-color)) padding-box,
+                linear-gradient(45deg, var(--gradient-start), var(--gradient-middle), var(--gradient-end)) border-box;
+  }
+}
+
+/* Morphing shapes */
+.morphing-shape {
+  border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+  animation: morph 8s ease-in-out infinite;
+}
+
+@keyframes morph {
+  0% {
+    border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+  }
+  50% {
+    border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%;
+  }
+  100% {
+    border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+  }
+}
+
+/* Sparkle effect */
+.sparkle {
+  position: relative;
+}
+
+.sparkle::before {
+  content: "";
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, #ff0000, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8, #ff0000);
+  background-size: 400%;
+  border-radius: inherit;
+  z-index: -1;
+  animation: sparkle 20s linear infinite;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.sparkle:hover::before {
+  opacity: 1;
+}
+
+@keyframes sparkle {
+  0% {
+    background-position: 0 0;
+  }
+  50% {
+    background-position: 400% 0;
+  }
+  100% {
+    background-position: 0 0;
+  }
+}

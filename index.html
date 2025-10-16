@@ -18,8 +18,16 @@
         <div class="logo-container">
           <img src="https://i.ibb.co/21jpMNhw/234421810-326887782452132-7028869078528396806-n-removebg-preview-1.png" alt="zansti sardam institute Logo" class="app-logo">
         </div>
-        <h1 class="heading"> zansti sardam  ai Chatbot</h1>
-        <h4 class="sub-heading">Your intelligent assistant powered by chya luqman</h4>
+        <h1 class="heading" data-i18n="heading"> zansti sardam  ai Chatbot</h1>
+        <h4 class="sub-heading" data-i18n="subheading">Your intelligent assistant powered by chya luqman</h4>
+        <div style="margin-top: 10px;">
+          <label for="language-select" style="margin-right:8px;" data-i18n="language_label">Language:</label>
+          <select id="language-select" style="padding:6px 10px; border-radius:8px; border:1px solid #334155; background:transparent; color:inherit;">
+            <option value="en">English</option>
+            <option value="ckb">Kurdish (Sorani)</option>
+            <option value="ar">العربية</option>
+          </select>
+        </div>
       </header>
       
       <!-- Suggestions List -->
@@ -61,7 +69,7 @@
       <div class="prompt-container">
         <div class="prompt-wrapper">
           <form action="#" class="prompt-form">
-            <input type="text" placeholder="Message zansti sardam ..." class="prompt-input" required />
+            <input type="text" placeholder="Message zansti sardam ..." class="prompt-input" data-i18n-placeholder="prompt_placeholder" required />
             <div class="prompt-actions">
               <!-- File Upload Wrapper -->
               <div class="file-upload-wrapper">
@@ -80,7 +88,7 @@
           <button id="theme-toggle-btn" class="material-symbols-rounded" title="Toggle theme">dark_mode</button>
           <button id="delete-chats-btn" class="material-symbols-rounded" title="Clear chat">delete</button>
         </div>
-        <p class="disclaimer-text">zansti sardam  may display inaccurate info, including about people. Use responsibly.</p>
+        <p class="disclaimer-text" data-i18n="disclaimer">zansti sardam  may display inaccurate info, including about people. Use responsibly.</p>
       </div>
     </div>
     

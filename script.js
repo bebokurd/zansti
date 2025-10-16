@@ -5,6 +5,8 @@ const promptInput = promptForm.querySelector(".prompt-input");
 const fileInput = promptForm.querySelector("#file-input");
 const fileUploadWrapper = promptForm.querySelector(".file-upload-wrapper");
 const themeToggleBtn = document.querySelector("#theme-toggle-btn");
+const languageSelect = document.querySelector("#language-select");
+const suggestionsContainer = document.querySelector(".suggestions");
 
 // API Setup
 const GEMINI_API_KEY = "AIzaSyCq2YpHXbY90aMIZmCgll4QxfKIcAU4rWY";
@@ -15,9 +17,145 @@ const GEMINI_IMAGE_API_URL = `https://generativelanguage.googleapis.com/v1beta/m
 const DEEP_AI_API_URL = "https://api.deepai.org/api/text2img";
 const DEEP_AI_API_KEY = "b32201ab-245b-4103-b5e5-73823fcb11a8";
 
+// Pollinations API (browser-friendly, no key, good CORS)
+const POLLINATIONS_BASE_URL = "https://image.pollinations.ai/prompt/";
+
+// Hugging Face Inference API (optional, user-provided key)
+// Key is NOT hardcoded; it can be provided at runtime via `/set hf <key>` command
+const getHfApiKey = () => localStorage.getItem('hfApiKey') || '';
+const setHfApiKey = (key) => {
+  if (typeof key === 'string' && key.trim()) {
+    localStorage.setItem('hfApiKey', key.trim());
+    return true;
+  }
+  return false;
+};
+const HF_DEFAULT_MODEL = "stabilityai/stable-diffusion-2-1";
+
 let controller, typingInterval;
 const chatHistory = [];
 const userData = { message: "", file: {} };
+
+// Basic translations for UI (en, ckb (Sorani), ar)
+const translations = {
+  en: {
+    heading: "zansti sardam ai Chatbot",
+    subheading: "Your intelligent assistant powered by chya luqman",
+    disclaimer: "zansti sardam may display inaccurate info, including about people. Use responsibly.",
+    language_label: "Language:",
+    prompt_placeholder: "Message zansti sardam ...",
+  },
+  ckb: {
+    heading: "چاتبۆتی زانستی سەردەم",
+    subheading: "یارمەتی‌دەرێکی زیرەک بەهێزکراوە لە لایەن چیا لوقمان",
+    disclaimer: "زانستی سەردەم ڕەنگە زانیاری نەدرۆست پیشان بدات. بە وریایی بەکاربێنە.",
+    language_label: "زمان:",
+    prompt_placeholder: "نامە بنوسە بۆ زانستی سەردەم...",
+  },
+  ar: {
+    heading: "بوت دردشة زانستي سەردەم",
+    subheading: "مساعد ذكي مدعوم من چيا لوقمان",
+    disclaimer: "قد يعرض زانستي سەردەم معلومات غير دقيقة، بما في ذلك عن الأشخاص. استخدمه بمسؤولية.",
+    language_label: "اللغة:",
+    prompt_placeholder: "أرسل رسالة إلى زانستي سەردەم...",
+  },
+};
+
+const isRtl = (lang) => lang === 'ar' || lang === 'fa' || lang === 'ckb';
+
+const applyI18n = (lang) => {
+  const dict = translations[lang] || translations.en;
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (dict[key]) el.textContent = dict[key];
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    if (dict[key]) el.setAttribute('placeholder', dict[key]);
+  });
+  // Direction and alignment
+  const rtl = isRtl(lang);
+  document.documentElement.dir = rtl ? 'rtl' : 'ltr';
+  document.body.style.direction = rtl ? 'rtl' : 'ltr';
+};
+
+// Basic HTML escape for user-derived strings to prevent XSS
+const escapeHTML = (str) => {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+};
+
+// Allow only http(s), data, blob URLs when injecting into DOM
+const safeUrl = (url) => {
+  try {
+    const u = new URL(url, window.location.origin);
+    if (u.protocol === 'http:' || u.protocol === 'https:' || u.protocol === 'data:' || u.protocol === 'blob:') {
+      return u.toString();
+    }
+  } catch (_) {
+    // ignore
+  }
+  return '#';
+};
+
+// Initialize language from localStorage or default
+const initLanguage = () => {
+  const saved = localStorage.getItem('appLanguage') || 'en';
+  if (languageSelect) languageSelect.value = saved;
+  applyI18n(saved);
+  renderSuggestions(saved);
+};
+
+// Localized suggestions content
+const suggestionsByLang = {
+  en: [
+    { text: "Explain quantum computing in simple terms", icon: "science" },
+    { text: "Create a majestic dragon soaring over misty mountains", icon: "image" },
+    { text: "How do I make an HTTP request in JavaScript?", icon: "code" },
+    { text: "Write a poem about the beauty of nature", icon: "nature" },
+  ],
+  ckb: [
+    { text: "کۆانتەم بە سادەیی ڕوون بکەرەوە", icon: "science" },
+    { text: "/img ئەژدیهایەکێکی شاخەوان لەسەر دەشتی مۆڵەو پەروەردە دەکات", icon: "image" },
+    { text: "چۆن داواکردنی HTTP لە جاڤاسکریپت دروست بکەم؟", icon: "code" },
+    { text: "شاعیرانەکە لە سەربەخۆیی سرووشت بنووسە", icon: "nature" },
+  ],
+  ar: [
+    { text: "اشرح الحوسبة الكمية ببساطة", icon: "science" },
+    { text: "/img تنين مهيب يحلق فوق جبال ضبابية", icon: "image" },
+    { text: "كيف أرسل طلب HTTP في جافاسكريبت؟", icon: "code" },
+    { text: "اكتب قصيدة عن جمال الطبيعة", icon: "nature" },
+  ],
+};
+
+const bindSuggestionHandlers = () => {
+  if (!suggestionsContainer) return;
+  suggestionsContainer.querySelectorAll('.suggestions-item').forEach((suggestion) => {
+    suggestion.addEventListener("click", () => {
+      const text = suggestion.querySelector(".text")?.textContent || "";
+      promptInput.value = text;
+      promptForm.dispatchEvent(new Event("submit"));
+    });
+    suggestion.addEventListener("mouseenter", () => { suggestion.style.transform = "translateY(-10px)"; });
+    suggestion.addEventListener("mouseleave", () => { suggestion.style.transform = "translateY(0)"; });
+  });
+};
+
+const renderSuggestions = (lang) => {
+  if (!suggestionsContainer) return;
+  const items = suggestionsByLang[lang] || suggestionsByLang.en;
+  suggestionsContainer.innerHTML = items.map((it) => `
+    <li class="suggestions-item">
+      <p class="text">${it.text}</p>
+      <span class="icon material-symbols-rounded">${it.icon}</span>
+    </li>
+  `).join("");
+  bindSuggestionHandlers();
+};
 
 // Language detection map
 const languageMap = {
@@ -138,34 +276,151 @@ const createTypingIndicator = () => {
   return typingDiv;
 };
 
+// Sanitize and normalize prompts for image models
+const sanitizePrompt = (text) => {
+  if (!text) return "";
+  return String(text)
+    .replace(/\s+/g, " ")
+    .replace(/[\u0000-\u001F\u007F]/g, " ")
+    .trim()
+    .slice(0, 800); // keep under typical provider limits
+};
+
+// Promise timeout helper
+const withTimeout = (promise, ms, onTimeoutMessage = "Operation timed out") => {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(onTimeoutMessage)), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+};
+
+// Helper to construct a Pollinations image URL
+const buildPollinationsImageUrl = (prompt) => {
+  const params = new URLSearchParams({
+    width: "1024",
+    height: "1024",
+    nologo: "true",
+    enhance: "true"
+  });
+  return `${POLLINATIONS_BASE_URL}${encodeURIComponent(sanitizePrompt(prompt))}?${params.toString()}`;
+};
+
+// Helper to load an image and await success/failure
+const waitForImageLoad = (img, timeoutMs = 25000) => withTimeout(new Promise((resolve, reject) => {
+  const onLoad = () => { cleanup(); resolve(); };
+  const onError = (e) => { cleanup(); reject(e); };
+  const cleanup = () => {
+    img.removeEventListener("load", onLoad);
+    img.removeEventListener("error", onError);
+  };
+  img.addEventListener("load", onLoad);
+  img.addEventListener("error", onError);
+}), timeoutMs, "Image load timed out");
+
+// Function to generate image using Pollinations (no API key, direct image URL)
+const generateImageWithPollinations = async (prompt) => {
+  const url = buildPollinationsImageUrl(prompt);
+  // We create an off-DOM image to verify it loads (catching network/CORS issues)
+  const testImg = new Image();
+  testImg.crossOrigin = "anonymous"; // allow canvas usage if needed later
+  testImg.src = url;
+  await waitForImageLoad(testImg);
+  return url;
+};
+
+// Function to generate image using Hugging Face Inference API (returns blob URL)
+const generateImageWithHF = async (prompt, options = {}) => {
+  const modelId = options.modelId || HF_DEFAULT_MODEL;
+  const HF_API_KEY = getHfApiKey();
+  if (!HF_API_KEY) throw new Error("Hugging Face API key not configured");
+  const payload = {
+    inputs: sanitizePrompt(prompt),
+    parameters: {
+      num_inference_steps: 30,
+      guidance_scale: 7.5,
+      ...(options.parameters || {})
+    }
+  };
+  const url = `https://api-inference.huggingface.co/models/${encodeURIComponent(modelId)}`;
+  const maxAttempts = 3;
+  let lastErr;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const req = fetch(url, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${HF_API_KEY}`,
+          "Content-Type": "application/json",
+          "x-use-cache": "false",
+        },
+        body: JSON.stringify(payload),
+      });
+      const res = await withTimeout(req, 60000, "Hugging Face request timed out");
+      if (res.status === 503) {
+        // Model loading/warmup
+        const body = await res.json().catch(() => ({}));
+        const wait = Math.min(4000 * attempt, 10000);
+        await new Promise(r => setTimeout(r, wait));
+        continue;
+      }
+      if (!res.ok) {
+        const bodyText = await res.text().catch(() => "");
+        throw new Error(`HF error ${res.status}: ${res.statusText}${bodyText ? ` - ${bodyText}` : ''}`);
+      }
+      const blob = await res.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      // quick verify load
+      const testImg = new Image();
+      testImg.src = objectUrl;
+      await waitForImageLoad(testImg, 20000);
+      return objectUrl;
+    } catch (e) {
+      lastErr = e;
+      if (attempt < maxAttempts) continue;
+    }
+  }
+  throw lastErr || new Error("Hugging Face generation failed");
+};
+
 // Function to generate image using DeepAI API
 const generateImageWithDeepAI = async (prompt) => {
-  try {
-    const formData = new FormData();
-    formData.append('text', prompt);
-    
-    const response = await fetch(DEEP_AI_API_URL, {
-      method: "POST",
-      headers: {
-        "api-key": DEEP_AI_API_KEY,
-      },
-      body: formData
-    });
+  const maxAttempts = 2;
+  const backoffBaseMs = 1200;
+  const sanitized = sanitizePrompt(prompt);
+  let lastError;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const formData = new FormData();
+      formData.append('text', sanitized);
 
-    if (!response.ok) {
-      throw new Error(`DeepAI API error: ${response.status} ${response.statusText}`);
-    }
+      const abortController = new AbortController();
+      const req = fetch(DEEP_AI_API_URL, {
+        method: "POST",
+        headers: { "api-key": DEEP_AI_API_KEY },
+        body: formData,
+        signal: abortController.signal
+      });
 
-    const data = await response.json();
-    if (!data.output_url) {
-      throw new Error("DeepAI API returned no image URL");
+      const response = await withTimeout(req, 30000, "DeepAI request timed out");
+      if (!response.ok) {
+        const maybeJson = await response.clone().text().catch(() => "");
+        throw new Error(`DeepAI API error ${response.status}: ${response.statusText}${maybeJson ? ` - ${maybeJson}` : ''}`);
+      }
+
+      const data = await response.json();
+      if (!data.output_url) throw new Error("DeepAI API returned no image URL");
+      return data.output_url;
+    } catch (err) {
+      lastError = err;
+      if (attempt < maxAttempts) {
+        await new Promise(r => setTimeout(r, backoffBaseMs * attempt));
+        continue;
+      }
     }
-    
-    return data.output_url;
-  } catch (error) {
-    console.error("DeepAI API error:", error);
-    throw error;
   }
+  console.error("DeepAI API error:", lastError);
+  throw lastError;
 };
 
 // Function to generate image using Gemini API
@@ -229,7 +484,9 @@ const generateImageWithGemini = async (prompt) => {
 // Function to check if a message is requesting image generation
 const isImageGenerationRequest = (message) => {
   const lowerMessage = message.toLowerCase();
-  return lowerMessage.includes("image") || 
+  return lowerMessage.startsWith("/img ") ||
+         lowerMessage.startsWith("/image ") ||
+         lowerMessage.includes("image") || 
          lowerMessage.includes("picture") || 
          lowerMessage.includes("photo") ||
          lowerMessage.includes("generate") ||
@@ -259,9 +516,9 @@ const generateResponse = async (botMsgDiv) => {
       textElement.textContent = "Preparing your image generation request...";
       
       try {
-        // Try DeepAI first
-        textElement.textContent = "Generating image with DeepAI... This may take up to 30 seconds.";
-        const imageUrl = await generateImageWithDeepAI(userData.message);
+        // Try Pollinations first for fast, keyless generation
+        textElement.textContent = "Generating image...";
+        let imageUrl = await generateImageWithPollinations(userData.message);
         
         // Display the generated image
         const imgElement = document.createElement("img");
@@ -291,82 +548,135 @@ const generateResponse = async (botMsgDiv) => {
         };
         
         imgElement.onerror = () => {
-          // Handle image loading error
-          textElement.innerHTML = `
-            <p>Image generated successfully but failed to load preview.</p>
-            <p><a href="${imageUrl}" target="_blank">Click here to view the image</a></p>
-            <button class="download-btn" onclick="window.open('${imageUrl}', '_blank')">
-              <span class="material-symbols-rounded">open_in_new</span> View Image
-            </button>
-          `;
+          // If Pollinations preview fails, try DeepAI or HF as fallbacks
+          (async () => {
+            try {
+              textElement.textContent = "Retrying via DeepAI...";
+              const deepUrl = await generateImageWithDeepAI(userData.message);
+              imageUrl = deepUrl;
+              imgElement.src = deepUrl;
+            } catch (fallbackErr) {
+              try {
+                textElement.textContent = "Retrying via Hugging Face...";
+                const hfUrl = await generateImageWithHF(userData.message);
+                imageUrl = hfUrl;
+                imgElement.src = hfUrl;
+              } catch (hfErr) {
+                const safe = safeUrl(imageUrl);
+                textElement.innerHTML = `
+                  <p>Image generated successfully but failed to load preview.</p>
+                  <p><a href="${safe}" target="_blank" rel="noopener noreferrer">Click here to view the image</a></p>
+                  <button class="download-btn" onclick="window.open('${safe}', '_blank', 'noopener,noreferrer')">
+                    <span class="material-symbols-rounded">open_in_new</span> View Image
+                  </button>
+                `;
+              }
+            }
+          })();
         };
-      } catch (deepAIError) {
-        // Fallback to Gemini image generation if DeepAI fails
-        console.error("DeepAI API error:", deepAIError);
-        textElement.textContent = `DeepAI failed (${deepAIError.message}), trying Gemini...`;
+      } catch (firstError) {
+        // Fallback order: DeepAI -> Hugging Face -> Gemini description
+        console.error("Primary image source error:", firstError);
+        textElement.textContent = `Primary image source failed, trying DeepAI...`;
         
         try {
-          // Use Gemini for image description
-          textElement.textContent = "Generating detailed image description with Gemini...";
-          const geminiResponsePart = await generateImageWithGemini(userData.message);
-          
-          // Handle Gemini response (which will be a text description)
-          const responseText = geminiResponsePart.text.replace(/\*\*([^*]+)\*\*/g, "$1").trim();
-          
-          // Try to generate image from the description using DeepAI again
-          textElement.textContent = "Attempting to generate image from detailed description...";
-          try {
-            const imageUrl = await generateImageWithDeepAI(responseText);
-            
-            // Display the generated image
-            const imgElement = document.createElement("img");
-            imgElement.src = imageUrl;
-            imgElement.className = "generated-image";
-            imgElement.alt = "Generated image";
-            
-            imgElement.onload = () => {
-              textElement.innerHTML = `
-                <p>Here's the image based on your request:</p>
-              `;
-              textElement.appendChild(imgElement);
-              
-              // Add download button
-              const downloadBtn = document.createElement("button");
-              downloadBtn.className = "download-btn neon-glow";
-              downloadBtn.innerHTML = '<span class="material-symbols-rounded">download</span> Download Image';
-              downloadBtn.onclick = () => {
-                const link = document.createElement("a");
-                link.href = imageUrl;
-                link.download = `generated-image-${Date.now()}.png`;
-                link.target = "_blank";
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+          // Try DeepAI direct from original user prompt
+          const deepUrl = await generateImageWithDeepAI(userData.message);
+          // Display the generated image
+          const imgElement = document.createElement("img");
+          imgElement.src = deepUrl;
+          imgElement.className = "generated-image";
+          imgElement.alt = "Generated image";
+
+          imgElement.onload = () => {
+            textElement.innerHTML = "";
+            textElement.appendChild(imgElement);
+
+            const downloadBtn = document.createElement("button");
+            downloadBtn.className = "download-btn neon-glow";
+            downloadBtn.innerHTML = '<span class="material-symbols-rounded">download</span> Download Image';
+            downloadBtn.onclick = () => {
+              const link = document.createElement("a");
+              link.href = deepUrl;
+              link.download = `generated-image-${Date.now()}.png`;
+              link.target = "_blank";
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+            };
+            textElement.appendChild(downloadBtn);
+          };
+
+          imgElement.onerror = async () => {
+            // Next fallback: Hugging Face
+            try {
+              textElement.textContent = "Retrying via Hugging Face...";
+              const hfUrl = await generateImageWithHF(userData.message);
+              imgElement.src = hfUrl;
+              return; // let onload handler take over
+            } catch (_) {}
+
+            // As a last resort, ask Gemini for a descriptive prompt, then try DeepAI again
+            try {
+              textElement.textContent = "Generating detailed image description with Gemini...";
+              const geminiResponsePart = await generateImageWithGemini(userData.message);
+              const responseText = geminiResponsePart.text.replace(/\*\*([^*]+)\*\*/g, "$1").trim();
+              textElement.textContent = "Attempting to generate image from detailed description...";
+              const finalUrl = await generateImageWithDeepAI(responseText);
+
+              const finalImg = document.createElement("img");
+              finalImg.src = finalUrl;
+              finalImg.className = "generated-image";
+              finalImg.alt = "Generated image";
+              finalImg.onload = () => {
+                textElement.innerHTML = "";
+                textElement.appendChild(finalImg);
+                const downloadBtn = document.createElement("button");
+                downloadBtn.className = "download-btn neon-glow";
+                downloadBtn.innerHTML = '<span class="material-symbols-rounded">download</span> Download Image';
+                downloadBtn.onclick = () => {
+                  const link = document.createElement("a");
+                  link.href = finalUrl;
+                  link.download = `generated-image-${Date.now()}.png`;
+                  link.target = "_blank";
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                };
+                textElement.appendChild(downloadBtn);
               };
-              textElement.appendChild(downloadBtn);
-            };
-            
-            imgElement.onerror = () => {
-              // If image fails, show the description
-              textElement.innerHTML = `
-                <p>I couldn't generate an image, but here's a detailed description you can use with other tools:</p>
-                <p>${responseText}</p>
-              `;
-            };
-          } catch (secondDeepAIError) {
-            // If second DeepAI attempt fails, just show the description
+              finalImg.onerror = () => {
+                textElement.innerHTML = `
+                  <p>I couldn't generate an image, but here's a detailed description you can use with other tools:</p>
+                  <p>${escapeHTML(responseText)}</p>
+                `;
+              };
+            } catch (geminiError) {
+              console.error("Gemini API error:", geminiError);
+              textElement.textContent = `All image generation options failed. Error: ${geminiError.message}`;
+              textElement.style.color = "var(--error-color)";
+              botMsgDiv.classList.remove("loading");
+              document.body.classList.remove("bot-responding");
+            }
+          };
+        } catch (deepAIError) {
+          // DeepAI also failed: try Gemini description then give text
+          console.error("DeepAI API error:", deepAIError);
+          try {
+            textElement.textContent = "Generating detailed image description with Gemini...";
+            const geminiResponsePart = await generateImageWithGemini(userData.message);
+            const responseText = geminiResponsePart.text.replace(/\*\*([^*]+)\*\*/g, "$1").trim();
             textElement.innerHTML = `
               <p>I couldn't generate an image, but here's a detailed description you can use with other image generation tools:</p>
-              <p>${responseText}</p>
+              <p>${escapeHTML(responseText)}</p>
             `;
+          } catch (geminiError) {
+            console.error("Gemini API error:", geminiError);
+            textElement.textContent = `Both image generation services failed. Error: ${geminiError.message}`;
+            textElement.style.color = "var(--error-color)";
+            botMsgDiv.classList.remove("loading");
+            document.body.classList.remove("bot-responding");
           }
-        } catch (geminiError) {
-          // If both fail, show error message
-          console.error("Gemini API error:", geminiError);
-          textElement.textContent = `Both image generation services failed. Error: ${geminiError.message}`;
-          textElement.style.color = "var(--error-color)";
-          botMsgDiv.classList.remove("loading");
-          document.body.classList.remove("bot-responding");
         }
       }
     } else {
@@ -409,6 +719,24 @@ const handleFormSubmit = (e) => {
   e.preventDefault();
   const userMessage = promptInput.value.trim();
   if (!userMessage || document.body.classList.contains("bot-responding")) return;
+
+  // Handle secret command to set Hugging Face key: /set hf <key>
+  if (userMessage.toLowerCase().startsWith('/set hf ')) {
+    const key = userMessage.slice(8).trim();
+    const ok = setHfApiKey(key);
+    promptInput.value = "";
+    const systemMsg = createMessageElement(`
+      <div class="avatar">
+        <img src="https://i.ibb.co/21jpMNhw/234421810-326887782452132-7028869078528396806-n-removebg-preview-1.png" alt="Bot Avatar" class="avatar-image">
+      </div>
+      <div class="message-content">
+        <p class="message-text">${ok ? 'HF key saved locally.' : 'Invalid key.'}</p>
+      </div>
+    `, "bot-message");
+    chatsContainer.appendChild(systemMsg);
+    scrollToBottom();
+    return;
+  }
   userData.message = userMessage;
   promptInput.value = "";
   document.body.classList.add("chats-active", "bot-responding");
@@ -509,6 +837,16 @@ themeToggleBtn.addEventListener("click", () => {
   }, 300);
 });
 
+// Language selection
+if (languageSelect) {
+  languageSelect.addEventListener('change', (e) => {
+    const lang = e.target.value;
+    localStorage.setItem('appLanguage', lang);
+    applyI18n(lang);
+    renderSuggestions(lang);
+  });
+}
+
 // Delete all chats
 document.querySelector("#delete-chats-btn").addEventListener("click", () => {
   if (confirm("Are you sure you want to clear the chat history?")) {
@@ -557,11 +895,30 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "Escape" && document.body.classList.contains("bot-responding")) {
     document.querySelector("#stop-response-btn").click();
   }
+
+  // Block common DevTools/view-source shortcuts
+  const key = e.key?.toLowerCase();
+  const isCtrl = e.ctrlKey || e.metaKey; // meta for macOS
+  const isShift = e.shiftKey;
+  // F12
+  if (key === 'f12') { e.preventDefault(); e.stopPropagation(); }
+  // Ctrl+Shift+I/J/C
+  if (isCtrl && isShift && (key === 'i' || key === 'j' || key === 'c')) { e.preventDefault(); e.stopPropagation(); }
+  // Ctrl+U (view source)
+  if (isCtrl && key === 'u') { e.preventDefault(); e.stopPropagation(); }
+  // Optional: block print/save (Ctrl+P / Ctrl+S)
+  if (isCtrl && (key === 'p' || key === 's')) { e.preventDefault(); e.stopPropagation(); }
 });
 
 // Focus input on page load
 window.addEventListener("load", () => {
   promptInput.focus();
+  initLanguage();
+});
+
+// Disable right-click context menu
+document.addEventListener('contextmenu', (e) => {
+  e.preventDefault();
 });
 
 // Add welcome message

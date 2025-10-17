@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Chatbot Improvements Demo</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      background: #0f172a;
+      color: #edf3ff;
+      font-family: "Poppins", sans-serif;
+      padding: 20px;
+      direction: ltr;
+    }
+    
+    .demo-container {
+      max-width: 800px;
+      margin: 50px auto;
+      text-align: center;
+    }
+    
+    .improvement-section {
+      background: rgba(30, 41, 59, 0.7);
+      border-radius: 15px;
+      padding: 20px;
+      margin: 20px 0;
+      text-align: left;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(51, 65, 85, 0.5);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.25), 0 8px 10px -6px rgba(0, 0, 0, 0.25);
+    }
+    
+    .improvement-section h3 {
+      color: #6366f1;
+      margin-top: 0;
+      border-bottom: 1px solid rgba(99, 102, 241, 0.3);
+      padding-bottom: 10px;
+    }
+    
+    .demo-button {
+      background: #4f46e5;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      margin: 5px;
+    }
+    
+    .demo-button:hover {
+      background: #4338ca;
+      transform: translateY(-2px);
+    }
+    
+    .network-status-demo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 10px;
+      background: #ef4444;
+      color: white;
+      border-radius: 10px;
+      margin: 10px 0;
+    }
+    
+    .control-button-demo {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      border: 1px solid #334155;
+      background: #1e293b;
+      color: #edf3ff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      margin: 5px;
+    }
+    
+    .control-button-demo:hover {
+      background: #334155;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    }
+  </style>
+</head>
+<body>
+  <div class="demo-container">
+    <h1>AI Chatbot Improvements Demo</h1>
+    <p>Here are the key improvements made to the chatbot:</p>
+    
+    <div class="improvement-section">
+      <h3>1. Enhanced Loading Experience</h3>
+      <p>The loading animation has been improved with smoother transitions and better visual feedback.</p>
+      <div class="loading-overlay" style="display: flex; position: relative; width: 200px; height: 100px; background: #0f172a; margin: 10px auto;">
+        <div class="loading-spinner">
+          <div class="spinner"></div>
+          <div class="loading-text" style="font-size: 0.9rem;">Loading...</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="improvement-section">
+      <h3>2. Improved Accessibility</h3>
+      <p>Better ARIA labels and keyboard navigation support have been added.</p>
+      <div style="display: flex; justify-content: center; gap: 10px;">
+        <button class="control-button-demo" title="Back" aria-label="Back to previous page">arrow_back</button>
+        <button class="control-button-demo" title="Open menu" aria-label="Open navigation menu">menu</button>
+      </div>
+    </div>
+    
+    <div class="improvement-section">
+      <h3>3. Enhanced Error Handling</h3>
+      <p>Error messages are now more user-friendly and visually distinct.</p>
+      <div class="message bot-message error" style="max-width: 100%; margin: 10px 0;">
+        <div class="avatar">
+          <img src="https://i.ibb.co/21jpMNhw/234421810-326887782452132-7028869078528396806-n-removebg-preview-1.png" alt="Bot Avatar" class="avatar-image">
+        </div>
+        <div class="message-content">
+          <div class="message-header">
+            <span class="language-indicator error-indicator">Error</span>
+          </div>
+          <p class="message-text error-message">Sorry, I encountered an error. Please try again.</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="improvement-section">
+      <h3>4. Network Status Indicator</h3>
+      <p>Users are now informed when there are network connectivity issues.</p>
+      <div class="network-status-demo">
+        <span class="network-status-icon material-symbols-rounded">cloud_off</span>
+        <span class="network-status-text">Network connection lost. Reconnecting...</span>
+      </div>
+    </div>
+    
+    <div class="improvement-section">
+      <h3>5. Performance Optimizations</h3>
+      <p>Animations have been optimized for better performance using transform and opacity.</p>
+      <button class="demo-button" onclick="this.style.transform='scale(1.1)'; setTimeout(() => this.style.transform='scale(1)', 300);">
+        Click to see optimized animation
+      </button>
+    </div>
+    
+    <div class="improvement-section">
+      <h3>6. Kurdish Font Support</h3>
+      <p>Kurdish text is now displayed with the Speda Bold font for better readability.</p>
+      <div style="font-family: 'Speda Bold', 'Poppins', sans-serif; font-weight: bold; direction: rtl; text-align: right; padding: 15px; background: rgba(30, 41, 59, 0.7); border-radius: 10px; margin: 10px 0;">
+        سڵاو، ئەمە نموونەیەکە لە بەکارهێنانی فۆنتی کوردی "Speeda Bold"ە.
+      </div>
+    </div>
+  </div>
+</body>
+</html>

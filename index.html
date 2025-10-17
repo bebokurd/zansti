@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <!-- zansti sardam institute AI Chatbot - Enhanced Design -->
+ 
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://generativelanguage.googleapis.com https://api.deepai.org https://image.pollinations.ai https://api-inference.huggingface.co; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; connect-src 'self' https://generativelanguage.googleapis.com https://api.deepai.org https://image.pollinations.ai https://api-inference.huggingface.co; font-src 'self' https://fonts.gstatic.com; object-src 'none'; frame-ancestors 'none';">
     <title> zansti sardam   AI Chatbot</title>
     <!-- Linking Google Fonts For Icons -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
@@ -20,13 +22,20 @@
         </div>
         <h1 class="heading" data-i18n="heading"> zansti sardam  ai Chatbot</h1>
         <h4 class="sub-heading" data-i18n="subheading">Your intelligent assistant powered by chya luqman</h4>
-        <div style="margin-top: 10px;">
-          <label for="language-select" style="margin-right:8px;" data-i18n="language_label">Language:</label>
-          <select id="language-select" style="padding:6px 10px; border-radius:8px; border:1px solid #334155; background:transparent; color:inherit;">
-            <option value="en">English</option>
-            <option value="ckb">Kurdish (Sorani)</option>
-            <option value="ar">العربية</option>
-          </select>
+        <div class="header-controls">
+          <button id="back-btn" class="control-button material-symbols-rounded" title="Back" aria-label="Back to previous page">arrow_back</button>
+          <button id="sidebar-toggle-btn" class="control-button material-symbols-rounded" title="Open menu" aria-label="Open navigation menu">menu</button>
+        </div>
+        <div class="language-selector-container">
+          <label for="language-select" class="language-label" data-i18n="language_label">Language:</label>
+          <div class="select-wrapper">
+            <select id="language-select" class="language-select">
+              <option value="en">English</option>
+              <option value="ckb" class="kurdish-text">Kurdish (Sorani)</option>
+              <option value="ar">العربية</option>
+            </select>
+            <span class="select-icon material-symbols-rounded">language</span>
+          </div>
         </div>
       </header>
       
@@ -67,46 +76,169 @@
       
       <!-- Prompt Input -->
       <div class="prompt-container">
+        <div class="network-status" id="network-status">
+          <span class="network-status-icon material-symbols-rounded">cloud_off</span>
+          <span class="network-status-text">Network connection lost. Reconnecting...</span>
+        </div>
         <div class="prompt-wrapper">
-          <form action="#" class="prompt-form">
-            <input type="text" placeholder="Message zansti sardam ..." class="prompt-input" data-i18n-placeholder="prompt_placeholder" required />
+          <form action="#" class="prompt-form" aria-label="Chat input form">
+            <input type="text" placeholder="Message zansti sardam ..." class="prompt-input" data-i18n-placeholder="prompt_placeholder" required aria-label="Type your message here" />
             <div class="prompt-actions">
               <!-- File Upload Wrapper -->
               <div class="file-upload-wrapper">
-                <img src="#" class="file-preview" alt="Preview" />
-                <input id="file-input" type="file" accept="image/*, .pdf, .txt, .csv" hidden />
-                <button type="button" class="file-icon material-symbols-rounded" title="Uploaded file">description</button>
-                <button id="cancel-file-btn" type="button" class="material-symbols-rounded" title="Remove file">close</button>
-                <button id="add-file-btn" type="button" class="material-symbols-rounded" title="Attach file">attach_file</button>
+                <img src="#" class="file-preview" alt="File preview" />
+                <input id="file-input" type="file" accept="image/*, .pdf, .txt, .csv" hidden aria-label="Upload file" />
+                <button type="button" class="file-icon material-symbols-rounded" title="Uploaded file" aria-label="Uploaded file">description</button>
+                <button id="cancel-file-btn" type="button" class="material-symbols-rounded" title="Remove file" aria-label="Remove uploaded file">close</button>
+                <button id="add-file-btn" type="button" class="material-symbols-rounded" title="Attach file" aria-label="Attach file">attach_file</button>
               </div>
               <!-- Send Prompt and Stop Response Buttons -->
-              <button id="stop-response-btn" type="button" class="material-symbols-rounded" title="Stop generation">stop_circle</button>
-              <button id="send-prompt-btn" class="material-symbols-rounded" title="Send message">send</button>
+              <button id="stop-response-btn" type="button" class="material-symbols-rounded" title="Stop generation" aria-label="Stop response generation">stop_circle</button>
+              <button id="send-prompt-btn" class="material-symbols-rounded" title="Send message" aria-label="Send message">send</button>
             </div>
           </form>
           <!-- Theme and Delete Chats Buttons -->
-          <button id="theme-toggle-btn" class="material-symbols-rounded" title="Toggle theme">dark_mode</button>
-          <button id="delete-chats-btn" class="material-symbols-rounded" title="Clear chat">delete</button>
+          <button id="theme-toggle-btn" class="material-symbols-rounded" title="Toggle theme" aria-label="Toggle dark/light theme">dark_mode</button>
+          <button id="delete-chats-btn" class="material-symbols-rounded" title="Clear chat" aria-label="Clear chat history">delete</button>
         </div>
-        <p class="disclaimer-text" data-i18n="disclaimer">zansti sardam  may display inaccurate info, including about people. Use responsibly.</p>
+        <p class="disclaimer-text" data-i18n="disclaimer" role="alert">zansti sardam may display inaccurate info, including about people. Use responsibly.</p>
+      </div>
+    </div>
+    <!-- Sidebar and overlay -->
+    <div class="sidebar" role="navigation" aria-label="Main navigation">
+      <div class="sidebar-header">
+        <span>Menu</span>
+        <button class="material-symbols-rounded sidebar-close" title="Close" aria-label="Close menu">close</button>
+      </div>
+      <nav class="sidebar-nav">
+        <button class="sidebar-item" data-action="recent" aria-label="View recent chats">
+          <span class="material-symbols-rounded">history</span>
+          <span>Recent (/recent)</span>
+        </button>
+        <button class="sidebar-item" id="sidebar-clear-chats" aria-label="Clear chat history">
+          <span class="material-symbols-rounded">delete</span>
+          <span>Clear chats</span>
+        </button>
+        <button class="sidebar-item" data-action="theme" aria-label="Toggle theme">
+          <span class="material-symbols-rounded">brightness_6</span>
+          <span>Toggle theme</span>
+        </button>
+        <button class="sidebar-item" id="sidebar-security" aria-label="Security settings">
+          <span class="material-symbols-rounded">security</span>
+          <span>Security Settings</span>
+        </button>
+      </nav>
+      <div class="sidebar-footer">
+        <small>zansti sardam</small>
       </div>
     </div>
     
+    <!-- Security Settings Panel -->
+    <div id="security-panel" class="security-panel">
+      <div class="security-panel-header">
+        <h3>Security Settings</h3>
+        <button class="material-symbols-rounded security-panel-close" title="Close">close</button>
+      </div>
+      <div class="security-panel-content">
+        <div class="api-key-section">
+          <h4>API Keys</h4>
+          <p class="security-note">Enter your API keys for enhanced functionality. Keys are encrypted and stored locally.</p>
+          
+          <div class="api-key-input-group">
+            <label for="gemini-api-key">Gemini API Key:</label>
+            <input type="password" id="gemini-api-key" placeholder="Enter your Gemini API key" />
+            <button id="save-gemini-key" class="save-key-btn">Save</button>
+          </div>
+          
+          <div class="api-key-input-group">
+            <label for="deepai-api-key">DeepAI API Key:</label>
+            <input type="password" id="deepai-api-key" placeholder="Enter your DeepAI API key" />
+            <button id="save-deepai-key" class="save-key-btn">Save</button>
+          </div>
+          
+          <div class="api-key-input-group">
+            <label for="hf-api-key">Hugging Face API Key:</label>
+            <input type="password" id="hf-api-key" placeholder="Enter your Hugging Face API key" />
+            <button id="save-hf-key" class="save-key-btn">Save</button>
+          </div>
+          
+          <div class="security-actions">
+            <button id="clear-all-keys" class="clear-keys-btn">Clear All Keys</button>
+          </div>
+        </div>
+        
+        <div class="security-info">
+          <h4>Security Information</h4>
+          <ul>
+            <li>API keys are encrypted before storage</li>
+            <li>Keys are stored only in your browser's localStorage</li>
+            <li>Keys are never sent to any server except the respective API providers</li>
+            <li>For maximum security, use your own API keys</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="sidebar-overlay" aria-hidden="true"></div>
+    
     <!-- Loading indicator for initial page load -->
-    <div id="initial-loader" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--primary-color); z-index: 1000; justify-content: center; align-items: center; flex-direction: column;">
-      <div style="width: 50px; height: 50px; border: 5px solid var(--tertiary-color); border-top: 5px solid var(--accent-color); border-radius: 50%; animation: spin 1s linear infinite;"></div>
-      <p style="margin-top: 20px; font-size: 1.2rem; color: var(--text-color);">Loading zansti sardam  Chatbot...</p>
+    <div id="initial-loader" class="loading-overlay">
+      <div class="loading-content">
+        <div class="loading-logo-container">
+          <img src="https://i.ibb.co/21jpMNhw/234421810-326887782452132-7028869078528396806-n-removebg-preview-1.png" alt="zansti sardam institute Logo" class="loading-logo">
+        </div>
+        <div class="loading-spinner">
+          <div class="spinner"></div>
+          <div class="loading-text">Loading zansti sardam Chatbot...</div>
+        </div>
+      </div>
     </div>
     
     <script>
+      // Security enhancements
+      (function() {
+        // Add security headers
+        if (typeof window !== 'undefined') {
+          // Prevent clickjacking
+          if (window.self !== window.top) {
+            window.top.location = window.self.location;
+          }
+          
+          // Disable right-click context menu for additional protection
+          document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            return false;
+          });
+          
+          // Disable text selection for sensitive elements
+          const sensitiveElements = document.querySelectorAll('.prompt-input, .message-text');
+          sensitiveElements.forEach(el => {
+            el.addEventListener('selectstart', function(e) {
+              // Allow selection in input fields but not in message texts
+              if (!el.classList.contains('prompt-input')) {
+                e.preventDefault();
+                return false;
+              }
+            });
+          });
+        }
+      })();
+      
       // Show loader on page load
       document.addEventListener('DOMContentLoaded', function() {
         const loader = document.getElementById('initial-loader');
         if (loader) {
           loader.style.display = 'flex';
+          // Add a slight delay to ensure smooth transition
           setTimeout(() => {
-            loader.style.display = 'none';
-          }, 800);
+            loader.style.opacity = '1';
+          }, 10);
+          // Hide loader after content is ready
+          setTimeout(() => {
+            loader.style.opacity = '0';
+            setTimeout(() => {
+              loader.style.display = 'none';
+            }, 500);
+          }, 1200);
         }
       });
     </script>

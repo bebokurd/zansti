@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loading Logo Demo</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      background: #0f172a;
+      color: #edf3ff;
+      font-family: "Poppins", sans-serif;
+      margin: 0;
+      padding: 20px;
+    }
+    
+    .demo-container {
+      max-width: 800px;
+      margin: 50px auto;
+      text-align: center;
+    }
+    
+    .demo-section {
+      background: rgba(30, 41, 59, 0.7);
+      border-radius: 15px;
+      padding: 20px;
+      margin: 20px 0;
+      text-align: left;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(51, 65, 85, 0.5);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.25), 0 8px 10px -6px rgba(0, 0, 0, 0.25);
+    }
+    
+    .demo-section h3 {
+      color: #6366f1;
+      margin-top: 0;
+      border-bottom: 1px solid rgba(99, 102, 241, 0.3);
+      padding-bottom: 10px;
+    }
+    
+    /* Demo loading overlay */
+    .demo-loading-overlay {
+      position: relative;
+      width: 100%;
+      height: 300px;
+      background: #0f172a;
+      border-radius: 15px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 20px 0;
+      overflow: hidden;
+    }
+    
+    .demo-loading-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 30px;
+    }
+    
+    .demo-loading-logo-container {
+      display: flex;
+      justify-content: center;
+      animation: float 3s ease-in-out infinite;
+    }
+    
+    .demo-loading-logo {
+      width: 100px;
+      height: 100px;
+      object-fit: contain;
+      border-radius: 50%;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.25), 0 8px 10px -6px rgba(0, 0, 0, 0.25);
+    }
+    
+    .demo-loading-spinner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+    
+    .demo-spinner {
+      width: 50px;
+      height: 50px;
+      border: 5px solid #334155;
+      border-top: 5px solid #6366f1;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    .demo-loading-text {
+      font-size: 1.2rem;
+      color: #edf3ff;
+      font-weight: 500;
+      text-align: center;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    @keyframes float {
+      0% {
+        transform: translateY(0px);
+      }
+      50% {
+        transform: translateY(-15px);
+      }
+      100% {
+        transform: translateY(0px);
+      }
+    }
+    
+    .button-group {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin: 20px 0;
+    }
+    
+    .demo-button {
+      background: #4f46e5;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+    
+    .demo-button:hover {
+      background: #4338ca;
+      transform: translateY(-2px);
+    }
+  </style>
+</head>
+<body>
+  <div class="demo-container">
+    <h1>Loading Logo Enhancement Demo</h1>
+    <p>Here's the improved loading experience with the zansti sardam logo:</p>
+    
+    <div class="demo-section">
+      <h3>Enhanced Loading Screen</h3>
+      <p>The loading screen now features the zansti sardam institute logo with a floating animation and spinner.</p>
+      
+      <div class="demo-loading-overlay">
+        <div class="demo-loading-content">
+          <div class="demo-loading-logo-container">
+            <img src="https://i.ibb.co/21jpMNhw/234421810-326887782452132-7028869078528396806-n-removebg-preview-1.png" alt="zansti sardam institute Logo" class="demo-loading-logo">
+          </div>
+          <div class="demo-loading-spinner">
+            <div class="demo-spinner"></div>
+            <div class="demo-loading-text">Loading zansti sardam Chatbot...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="demo-section">
+      <h3>Features</h3>
+      <ul>
+        <li>Brand recognition with the official logo</li>
+        <li>Floating animation for visual interest</li>
+        <li>Spinner indicator for loading progress</li>
+        <li>Responsive design for all screen sizes</li>
+        <li>Consistent with the overall design language</li>
+      </ul>
+    </div>
+    
+    <div class="button-group">
+      <button class="demo-button" onclick="showDemo()">Show Loading Demo</button>
+      <button class="demo-button" onclick="hideDemo()">Hide Loading Demo</button>
+    </div>
+  </div>
+  
+  <script>
+    function showDemo() {
+      const overlay = document.querySelector('.demo-loading-overlay');
+      overlay.style.background = '#0f172a';
+      overlay.innerHTML = `
+        <div class="demo-loading-content">
+          <div class="demo-loading-logo-container">
+            <img src="https://i.ibb.co/21jpMNhw/234421810-326887782452132-7028869078528396806-n-removebg-preview-1.png" alt="zansti sardam institute Logo" class="demo-loading-logo">
+          </div>
+          <div class="demo-loading-spinner">
+            <div class="demo-spinner"></div>
+            <div class="demo-loading-text">Loading zansti sardam Chatbot...</div>
+          </div>
+        </div>
+      `;
+    }
+    
+    function hideDemo() {
+      const overlay = document.querySelector('.demo-loading-overlay');
+      overlay.style.background = '#1e293b';
+      overlay.innerHTML = '<div style="color: #94a3b8; font-size: 1.2rem;">Click "Show Loading Demo" to see the enhanced loading screen</div>';
+    }
+  </script>
+</body>
+</html>

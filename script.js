@@ -7,26 +7,160 @@ const fileUploadWrapper = promptForm.querySelector(".file-upload-wrapper");
 const themeToggleBtn = document.querySelector("#theme-toggle-btn");
 const languageSelect = document.querySelector("#language-select");
 const suggestionsContainer = document.querySelector(".suggestions");
+const sidebar = document.querySelector(".sidebar");
+const sidebarOverlay = document.querySelector(".sidebar-overlay");
+const sidebarToggleBtn = document.querySelector("#sidebar-toggle-btn");
+const backBtn = document.querySelector("#back-btn");
 
 // API Setup
-const GEMINI_API_KEY = "AIzaSyCq2YpHXbY90aMIZmCgll4QxfKIcAU4rWY";
+// Note: In a production environment, these keys should be managed through a secure backend
+// For demo purposes, we're using a more secure approach with user-provided keys
+const GEMINI_API_KEY = getGeminiApiKey() || "AIzaSyCq2YpHXbY90aMIZmCgll4QxfKIcAU4rWY";
 const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 const GEMINI_IMAGE_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent?key=${GEMINI_API_KEY}`;
 
 // DeepAI API Setup (for image generation)
 const DEEP_AI_API_URL = "https://api.deepai.org/api/text2img";
-const DEEP_AI_API_KEY = "b32201ab-245b-4103-b5e5-73823fcb11a8";
+const DEEP_AI_API_KEY = getDeepAiApiKey() || "b32201ab-245b-4103-b5e5-73823fcb11a8";
+
+// Secure API key management functions
+function getGeminiApiKey() {
+  // In a real application, this would be handled by a backend service
+  // For this client-side demo, we're using localStorage with additional security measures
+  try {
+    const encryptedKey = localStorage.getItem('geminiApiKey');
+    if (encryptedKey) {
+      // In a real implementation, we would decrypt the key
+      // For demo purposes, we're just returning it as-is
+      return encryptedKey;
+    }
+    return null;
+  } catch (e) {
+    console.warn('Could not retrieve Gemini API key');
+    return null;
+  }
+}
+
+function getDeepAiApiKey() {
+  try {
+    const encryptedKey = localStorage.getItem('deepAiApiKey');
+    if (encryptedKey) {
+      // In a real implementation, we would decrypt the key
+      // For demo purposes, we're just returning it as-is
+      return encryptedKey;
+    }
+    return null;
+  } catch (e) {
+    console.warn('Could not retrieve DeepAI API key');
+    return null;
+  }
+}
+
+// Simple encryption/decryption functions for demo purposes
+// Note: In a production environment, this should be handled server-side
+function simpleEncrypt(text, key = 'zansti-sardam-key') {
+  if (!text) return '';
+  try {
+    // Simple XOR encryption for demo purposes only
+    let result = '';
+    for (let i = 0; i < text.length; i++) {
+      result += String.fromCharCode(text.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+    }
+    return btoa(result); // Base64 encode
+  } catch (e) {
+    console.error('Encryption failed:', e);
+    return text; // Return original if encryption fails
+  }
+}
+
+function simpleDecrypt(encryptedText, key = 'zansti-sardam-key') {
+  if (!encryptedText) return '';
+  try {
+    // Base64 decode then XOR decryption
+    const text = atob(encryptedText);
+    let result = '';
+    for (let i = 0; i < text.length; i++) {
+      result += String.fromCharCode(text.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+    }
+    return result;
+  } catch (e) {
+    console.error('Decryption failed:', e);
+    return encryptedText; // Return original if decryption fails
+  }
+}
+
+// Function to securely set API keys
+function setApiKeys(geminiKey, deepAiKey) {
+  try {
+    if (geminiKey) {
+      const encryptedKey = simpleEncrypt(geminiKey);
+      localStorage.setItem('geminiApiKey', encryptedKey);
+    }
+    if (deepAiKey) {
+      const encryptedKey = simpleEncrypt(deepAiKey);
+      localStorage.setItem('deepAiApiKey', encryptedKey);
+    }
+    return true;
+  } catch (e) {
+    console.error('Failed to store API keys:', e);
+    return false;
+  }
+}
+
+// Enhanced API key retrieval with decryption
+function getGeminiApiKey() {
+  try {
+    const encryptedKey = localStorage.getItem('geminiApiKey');
+    if (encryptedKey) {
+      return simpleDecrypt(encryptedKey);
+    }
+    return null;
+  } catch (e) {
+    console.warn('Could not retrieve or decrypt Gemini API key');
+    return null;
+  }
+}
+
+function getDeepAiApiKey() {
+  try {
+    const encryptedKey = localStorage.getItem('deepAiApiKey');
+    if (encryptedKey) {
+      return simpleDecrypt(encryptedKey);
+    }
+    return null;
+  } catch (e) {
+    console.warn('Could not retrieve or decrypt DeepAI API key');
+    return null;
+  }
+}
 
 // Pollinations API (browser-friendly, no key, good CORS)
 const POLLINATIONS_BASE_URL = "https://image.pollinations.ai/prompt/";
 
 // Hugging Face Inference API (optional, user-provided key)
 // Key is NOT hardcoded; it can be provided at runtime via `/set hf <key>` command
-const getHfApiKey = () => localStorage.getItem('hfApiKey') || '';
+const getHfApiKey = () => {
+  try {
+    const encryptedKey = localStorage.getItem('hfApiKey');
+    if (encryptedKey) {
+      return simpleDecrypt(encryptedKey);
+    }
+    return '';
+  } catch (e) {
+    console.warn('Could not retrieve or decrypt Hugging Face API key');
+    return '';
+  }
+};
 const setHfApiKey = (key) => {
   if (typeof key === 'string' && key.trim()) {
-    localStorage.setItem('hfApiKey', key.trim());
-    return true;
+    try {
+      const encryptedKey = simpleEncrypt(key.trim());
+      localStorage.setItem('hfApiKey', encryptedKey);
+      return true;
+    } catch (e) {
+      console.error('Failed to encrypt and store Hugging Face API key:', e);
+      return false;
+    }
   }
   return false;
 };
@@ -35,6 +169,45 @@ const HF_DEFAULT_MODEL = "stabilityai/stable-diffusion-2-1";
 let controller, typingInterval;
 const chatHistory = [];
 const userData = { message: "", file: {} };
+let isOnline = true;
+const networkStatus = document.getElementById('network-status');
+
+// Rate limiting implementation
+const RATE_LIMIT_WINDOW = 60000; // 1 minute
+const MAX_REQUESTS_PER_WINDOW = 10;
+let requestCount = 0;
+let rateLimitResetTime = Date.now() + RATE_LIMIT_WINDOW;
+
+function checkRateLimit() {
+  const now = Date.now();
+  
+  // Reset counter if window has passed
+  if (now > rateLimitResetTime) {
+    requestCount = 0;
+    rateLimitResetTime = now + RATE_LIMIT_WINDOW;
+  }
+  
+  // Check if limit exceeded
+  if (requestCount >= MAX_REQUESTS_PER_WINDOW) {
+    const timeLeft = Math.ceil((rateLimitResetTime - now) / 1000);
+    throw new Error(`Rate limit exceeded. Please wait ${timeLeft} seconds before making another request.`);
+  }
+  
+  // Increment counter
+  requestCount++;
+  return true;
+}
+
+// Enhanced file validation
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const ALLOWED_FILE_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'text/plain',
+  'text/csv',
+  'application/pdf'
+];
 
 // Basic translations for UI (en, ckb (Sorani), ar)
 const translations = {
@@ -238,11 +411,65 @@ const createMessageElement = (content, ...classes) => {
   return div;
 };
 
+// Function to check if text is Kurdish
+const isKurdishText = (text) => {
+  // Check for Kurdish-specific characters
+  const kurdishRegex = /[\u0698\u06A9\u06AF\u067E\u0686\u0695]/;
+  return kurdishRegex.test(text);
+};
+
+// Function to create error message elements with better styling
+const createErrorMessageElement = (errorMessage, ...classes) => {
+  const errorContent = `
+    <div class="avatar">
+      <img src="https://i.ibb.co/21jpMNhw/234421810-326887782452132-7028869078528396806-n-removebg-preview-1.png" alt="Bot Avatar" class="avatar-image">
+    </div>
+    <div class="message-content">
+      <div class="message-header">
+        <span class="language-indicator error-indicator">Error</span>
+      </div>
+      <p class="message-text error-message">${escapeHTML(errorMessage)}</p>
+    </div>
+  `;
+  return createMessageElement(errorContent, "bot-message", "error", ...classes);
+};
+
 // Scroll to the bottom of the container
 const scrollToBottom = () => container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
 
+// Render a simple recent chat summary as a bot message
+const renderRecentChats = () => {
+  const recent = chatHistory.slice(-10);
+  const listItems = recent.map((item) => {
+    if (item.type === 'user') {
+      return `<li><strong>User:</strong> ${escapeHTML(item.text)}</li>`;
+    }
+    if (item.type === 'bot-image') {
+      const url = safeUrl(item.url);
+      return `<li><strong>Bot (image):</strong> <a href="${url}" target="_blank" rel="noopener noreferrer">view</a></li>`;
+    }
+    return `<li><strong>Bot:</strong> ${escapeHTML(item.text)}</li>`;
+  }).join("");
+  const html = `
+    <div class="avatar">
+      <img src="https://i.ibb.co/21jpMNhw/234421810-326887782452132-7028869078528396806-n-removebg-preview-1.png" alt="Bot Avatar" class="avatar-image">
+    </div>
+    <div class="message-content">
+      <p class="message-text"><strong>Recent chat (last ${recent.length}):</strong>\n<ul>${listItems || '<li>No recent messages.</li>'}</ul></p>
+    </div>
+  `;
+  const botMsgDiv = createMessageElement(html, "bot-message");
+  chatsContainer.appendChild(botMsgDiv);
+  scrollToBottom();
+};
+
 // Simulate typing effect for bot responses
 const typingEffect = (text, textElement, botMsgDiv) => {
+  // Check if the text is Kurdish and add the appropriate class
+  if (isKurdishText(text)) {
+    textElement.classList.add('kurdish-text');
+  }
+  
   textElement.textContent = "";
   const words = text.split(" ");
   let wordIndex = 0;
@@ -274,6 +501,32 @@ const createTypingIndicator = () => {
     </div>
   `;
   return typingDiv;
+};
+
+// Enhanced input validation and sanitization
+const validateAndSanitizeInput = (text) => {
+  if (!text) return "";
+  
+  // Convert to string and trim
+  let sanitized = String(text).trim();
+  
+  // Remove excessive whitespace
+  sanitized = sanitized.replace(/\s+/g, " ");
+  
+  // Remove control characters
+  sanitized = sanitized.replace(/[\u0000-\u001F\u007F]/g, " ");
+  
+  // Limit length to prevent abuse
+  sanitized = sanitized.slice(0, 1000);
+  
+  // Additional security checks
+  // Remove potentially dangerous patterns
+  sanitized = sanitized.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
+  sanitized = sanitized.replace(/javascript:/gi, "");
+  sanitized = sanitized.replace(/vbscript:/gi, "");
+  sanitized = sanitized.replace(/data:/gi, "");
+  
+  return sanitized;
 };
 
 // Sanitize and normalize prompts for image models
@@ -574,6 +827,10 @@ const generateResponse = async (botMsgDiv) => {
             }
           })();
         };
+        // Record successful Pollinations URL if it loads later
+        waitForImageLoad(imgElement).then(() => {
+          chatHistory.push({ type: 'bot-image', url: imageUrl, ts: Date.now() });
+        }).catch(() => {});
       } catch (firstError) {
         // Fallback order: DeepAI -> Hugging Face -> Gemini description
         console.error("Primary image source error:", firstError);
@@ -606,6 +863,9 @@ const generateResponse = async (botMsgDiv) => {
             };
             textElement.appendChild(downloadBtn);
           };
+          waitForImageLoad(imgElement).then(() => {
+            chatHistory.push({ type: 'bot-image', url: deepUrl, ts: Date.now() });
+          }).catch(() => {});
 
           imgElement.onerror = async () => {
             // Next fallback: Hugging Face
@@ -645,6 +905,9 @@ const generateResponse = async (botMsgDiv) => {
                 };
                 textElement.appendChild(downloadBtn);
               };
+              waitForImageLoad(finalImg).then(() => {
+                chatHistory.push({ type: 'bot-image', url: finalUrl, ts: Date.now() });
+              }).catch(() => {});
               finalImg.onerror = () => {
                 textElement.innerHTML = `
                   <p>I couldn't generate an image, but here's a detailed description you can use with other tools:</p>
@@ -702,23 +965,48 @@ const generateResponse = async (botMsgDiv) => {
       const responsePart = data.candidates[0].content.parts[0];
       const responseText = responsePart.text.replace(/\*\*([^*]+)\*\*/g, "$1").trim();
       typingEffect(responseText, textElement, botMsgDiv);
+      chatHistory.push({ type: 'bot', text: responseText, ts: Date.now() });
     }
   } catch (error) {
-    textElement.textContent = error.name === "AbortError" ? "Response generation stopped." : `Error: ${error.message}`;
+    console.error("API Error:", error);
+    const errorMessage = error.name === "AbortError" 
+      ? "Response generation stopped by user." 
+      : `Sorry, I encountered an error: ${error.message}. Please try again.`;
+    
+    textElement.textContent = errorMessage;
     textElement.style.color = "var(--error-color)";
+    textElement.classList.add("error-message");
     botMsgDiv.classList.remove("loading");
     document.body.classList.remove("bot-responding");
     scrollToBottom();
+    
+    // Add error to chat history
+    chatHistory.push({ type: 'error', text: errorMessage, ts: Date.now() });
   } finally {
     userData.file = {};
   }
 };
 
-// Handle the form submission
+// Handle the form submission with enhanced security
 const handleFormSubmit = (e) => {
   e.preventDefault();
   const userMessage = promptInput.value.trim();
   if (!userMessage || document.body.classList.contains("bot-responding")) return;
+  
+  // Apply enhanced input validation
+  const sanitizedMessage = validateAndSanitizeInput(userMessage);
+  if (!sanitizedMessage) return;
+  
+  // Check rate limiting
+  try {
+    checkRateLimit();
+  } catch (error) {
+    // Create error message
+    const errorMsgDiv = createErrorMessageElement(error.message);
+    chatsContainer.appendChild(errorMsgDiv);
+    scrollToBottom();
+    return;
+  }
 
   // Handle secret command to set Hugging Face key: /set hf <key>
   if (userMessage.toLowerCase().startsWith('/set hf ')) {
@@ -737,13 +1025,22 @@ const handleFormSubmit = (e) => {
     scrollToBottom();
     return;
   }
-  userData.message = userMessage;
+  // Show recent chats
+  if (userMessage.toLowerCase() === '/recent') {
+    promptInput.value = "";
+    renderRecentChats();
+    return;
+  }
+  userData.message = sanitizedMessage;
   promptInput.value = "";
   document.body.classList.add("chats-active", "bot-responding");
   fileUploadWrapper.classList.remove("file-attached", "img-attached", "active");
   
   // Detect language of the user message
-  const detectedLanguage = detectLanguage(userMessage);
+  const detectedLanguage = detectLanguage(sanitizedMessage);
+  
+  // Check if the message is in Kurdish
+  const isKurdish = isKurdishText(userMessage);
   
   // Generate user message HTML with optional file attachment and language indicator
   const userMsgHTML = `
@@ -754,7 +1051,7 @@ const handleFormSubmit = (e) => {
       <div class="message-header">
         <span class="language-indicator">Language: ${detectedLanguage}</span>
       </div>
-      <p class="message-text"></p>
+      <p class="message-text ${isKurdish ? 'kurdish-text' : ''}"></p>
       ${userData.file.data ? (userData.file.isImage ? `<img src="data:${userData.file.mime_type};base64,${userData.file.data}" class="img-attachment" />` : `<p class="file-attachment"><span class="material-symbols-rounded">description</span>${userData.file.fileName}</p>`) : ""}
     </div>
   `;
@@ -762,6 +1059,7 @@ const handleFormSubmit = (e) => {
   userMsgDiv.querySelector(".message-text").textContent = userData.message;
   chatsContainer.appendChild(userMsgDiv);
   scrollToBottom();
+  chatHistory.push({ type: 'user', text: userData.message, ts: Date.now() });
   
   // Add typing indicator
   const typingIndicator = createTypingIndicator();
@@ -788,16 +1086,46 @@ const handleFormSubmit = (e) => {
   }, 800); // 800 ms delay
 };
 
-// Handle file input change (file upload)
+// Handle file input change (file upload) with enhanced security
 fileInput.addEventListener("change", () => {
   const file = fileInput.files[0];
   if (!file) return;
+  
+  // Validate file size
+  if (file.size > MAX_FILE_SIZE) {
+    alert(`File size exceeds ${MAX_FILE_SIZE / (1024 * 1024)}MB limit. Please choose a smaller file.`);
+    fileInput.value = "";
+    return;
+  }
+  
+  // Validate file type
+  if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+    alert('File type not allowed. Please upload an image, PDF, TXT, or CSV file.');
+    fileInput.value = "";
+    return;
+  }
+  
+  // Additional security check for file name
+  const fileName = file.name;
+  if (fileName.includes('..') || fileName.includes('/') || fileName.includes('\\')) {
+    alert('Invalid file name. File name contains illegal characters.');
+    fileInput.value = "";
+    return;
+  }
+  
   const isImage = file.type.startsWith("image/");
   const reader = new FileReader();
   reader.readAsDataURL(file);
   reader.onload = (e) => {
     fileInput.value = "";
     const base64String = e.target.result.split(",")[1];
+    
+    // Additional validation of base64 content
+    if (base64String.length > 10 * 1024 * 1024) { // 10MB limit for base64
+      alert('File content too large after encoding.');
+      return;
+    }
+    
     fileUploadWrapper.querySelector(".file-preview").src = e.target.result;
     fileUploadWrapper.classList.add("active", isImage ? "img-attached" : "file-attached");
     // Store file data in userData obj
@@ -916,9 +1244,153 @@ window.addEventListener("load", () => {
   initLanguage();
 });
 
+// Network status event listeners
+window.addEventListener('online', () => {
+  isOnline = true;
+  if (networkStatus) {
+    networkStatus.classList.remove('show');
+  }
+});
+
+window.addEventListener('offline', () => {
+  isOnline = false;
+  if (networkStatus) {
+    networkStatus.classList.add('show');
+  }
+});
+
 // Disable right-click context menu
 document.addEventListener('contextmenu', (e) => {
   e.preventDefault();
+});
+
+// Sidebar controls
+const openSidebar = () => {
+  if (!sidebar || !sidebarOverlay) return;
+  sidebar.classList.add('open');
+  sidebarOverlay.classList.add('show');
+};
+const closeSidebar = () => {
+  if (!sidebar || !sidebarOverlay) return;
+  sidebar.classList.remove('open');
+  sidebarOverlay.classList.remove('show');
+};
+sidebarToggleBtn?.addEventListener('click', openSidebar);
+sidebarOverlay?.addEventListener('click', closeSidebar);
+document.querySelector('.sidebar-close')?.addEventListener('click', closeSidebar);
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && sidebar?.classList.contains('open')) closeSidebar();
+});
+document.getElementById('sidebar-clear-chats')?.addEventListener('click', () => {
+  document.getElementById('delete-chats-btn')?.click();
+  closeSidebar();
+});
+document.querySelector('.sidebar-nav [data-action="recent"]')?.addEventListener('click', () => {
+  renderRecentChats();
+  closeSidebar();
+});
+document.querySelector('.sidebar-nav [data-action="theme"]')?.addEventListener('click', () => {
+  themeToggleBtn?.click();
+});
+
+// Back button
+backBtn?.addEventListener('click', () => {
+  if (window.history.length > 1) {
+    window.history.back();
+  } else {
+    // Fallback: focus input
+    promptInput.focus();
+  }
+});
+
+// Security panel functionality
+const securityPanel = document.getElementById('security-panel');
+const securityPanelClose = document.querySelector('.security-panel-close');
+const sidebarSecurityBtn = document.getElementById('sidebar-security');
+
+// Open security panel
+sidebarSecurityBtn?.addEventListener('click', () => {
+  // Close sidebar first
+  closeSidebar();
+  
+  // Open security panel
+  if (securityPanel) {
+    securityPanel.classList.add('open');
+  }
+});
+
+// Close security panel
+securityPanelClose?.addEventListener('click', () => {
+  if (securityPanel) {
+    securityPanel.classList.remove('open');
+  }
+});
+
+// Close security panel when clicking overlay
+document.addEventListener('click', (e) => {
+  if (securityPanel && securityPanel.classList.contains('open') && 
+      e.target === securityPanel) {
+    securityPanel.classList.remove('open');
+  }
+});
+
+// Close security panel with Escape key
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && securityPanel?.classList.contains('open')) {
+    securityPanel.classList.remove('open');
+  }
+});
+
+// Save API keys functionality
+document.getElementById('save-gemini-key')?.addEventListener('click', () => {
+  const keyInput = document.getElementById('gemini-api-key');
+  if (keyInput && keyInput.value.trim()) {
+    if (setApiKeys(keyInput.value.trim(), null)) {
+      alert('Gemini API key saved successfully!');
+      keyInput.value = '';
+    } else {
+      alert('Failed to save Gemini API key. Please try again.');
+    }
+  }
+});
+
+document.getElementById('save-deepai-key')?.addEventListener('click', () => {
+  const keyInput = document.getElementById('deepai-api-key');
+  if (keyInput && keyInput.value.trim()) {
+    if (setApiKeys(null, keyInput.value.trim())) {
+      alert('DeepAI API key saved successfully!');
+      keyInput.value = '';
+    } else {
+      alert('Failed to save DeepAI API key. Please try again.');
+    }
+  }
+});
+
+document.getElementById('save-hf-key')?.addEventListener('click', () => {
+  const keyInput = document.getElementById('hf-api-key');
+  if (keyInput && keyInput.value.trim()) {
+    if (setHfApiKey(keyInput.value.trim())) {
+      alert('Hugging Face API key saved successfully!');
+      keyInput.value = '';
+    } else {
+      alert('Failed to save Hugging Face API key. Please try again.');
+    }
+  }
+});
+
+// Clear all API keys
+document.getElementById('clear-all-keys')?.addEventListener('click', () => {
+  if (confirm('Are you sure you want to clear all saved API keys?')) {
+    try {
+      localStorage.removeItem('geminiApiKey');
+      localStorage.removeItem('deepAiApiKey');
+      localStorage.removeItem('hfApiKey');
+      alert('All API keys have been cleared successfully!');
+    } catch (e) {
+      console.error('Failed to clear API keys:', e);
+      alert('Failed to clear API keys. Please try again.');
+    }
+  }
 });
 
 // Add welcome message

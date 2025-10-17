@@ -176,6 +176,41 @@
             <li>For maximum security, use your own API keys</li>
           </ul>
         </div>
+        
+        <div class="tts-settings">
+          <h4>Text-to-Speech Settings</h4>
+          <p class="security-note">Configure TTS preferences for bot responses</p>
+          
+          <div class="tts-setting-group">
+            <label for="tts-voice">Voice:</label>
+            <select id="tts-voice" class="tts-voice-select">
+              <option value="default">Default Voice</option>
+            </select>
+          </div>
+          
+          <div class="tts-setting-group">
+            <label for="tts-rate">Speech Rate:</label>
+            <input type="range" id="tts-rate" min="0.5" max="2" step="0.1" value="1">
+            <span id="rate-value">1.0</span>
+          </div>
+          
+          <div class="tts-setting-group">
+            <label for="tts-pitch">Pitch:</label>
+            <input type="range" id="tts-pitch" min="0" max="2" step="0.1" value="1">
+            <span id="pitch-value">1.0</span>
+          </div>
+          
+          <div class="tts-setting-group">
+            <label for="tts-volume">Volume:</label>
+            <input type="range" id="tts-volume" min="0" max="1" step="0.1" value="1">
+            <span id="volume-value">1.0</span>
+          </div>
+          
+          <div class="tts-actions">
+            <button id="save-tts-settings" class="save-key-btn">Save Settings</button>
+            <button id="reset-tts-settings" class="clear-keys-btn">Reset</button>
+          </div>
+        </div>
       </div>
     </div>
     <div class="sidebar-overlay" aria-hidden="true"></div>
@@ -189,7 +224,19 @@
         <div class="loading-spinner">
           <div class="spinner"></div>
           <div class="loading-text">Loading zansti sardam Chatbot...</div>
+          <div class="audio-visualization">
+            <div class="audio-bar"></div>
+            <div class="audio-bar"></div>
+            <div class="audio-bar"></div>
+            <div class="audio-bar"></div>
+            <div class="audio-bar"></div>
+          </div>
         </div>
+        <!-- Hidden audio element for autoplay -->
+        <audio id="loading-audio" preload="auto" style="display: none;">
+          <source src="ttsmaker-file-2025-10-17-10-13-4.mp3" type="audio/mpeg">
+          Your browser does not support the audio element.
+        </audio>
       </div>
     </div>
     
@@ -223,18 +270,56 @@
         }
       })();
       
-      // Show loader on page load
+      // Show loader on page load with audio autoplay
       document.addEventListener('DOMContentLoaded', function() {
         const loader = document.getElementById('initial-loader');
+        const audio = document.getElementById('loading-audio');
+        
         if (loader) {
           loader.style.display = 'flex';
+          
+          // Try to play audio
+          if (audio) {
+            // Audio autoplay with error handling
+            const playAudio = () => {
+              audio.volume = 0.7; // Set volume to 70%
+              const playPromise = audio.play();
+              
+              if (playPromise !== undefined) {
+                playPromise
+                  .then(() => {
+                    console.log('Audio playback started successfully');
+                  })
+                  .catch(error => {
+                    console.warn('Audio autoplay failed:', error);
+                    // Audio autoplay failed, possibly due to browser policies
+                  });
+              }
+            };
+            
+            // Try to play immediately
+            playAudio();
+          }
+          
           // Add a slight delay to ensure smooth transition
           setTimeout(() => {
             loader.style.opacity = '1';
           }, 10);
+          
           // Hide loader after content is ready
           setTimeout(() => {
             loader.style.opacity = '0';
+            
+            // Stop audio when loader is hidden
+            if (audio) {
+              try {
+                audio.pause();
+                audio.currentTime = 0;
+              } catch (e) {
+                console.warn('Could not stop audio:', e);
+              }
+            }
+            
             setTimeout(() => {
               loader.style.display = 'none';
             }, 500);

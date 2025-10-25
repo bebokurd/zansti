@@ -332,78 +332,11 @@ body {
   font-size: 0.9rem;
 }
 
-/* TTS Settings */
-.tts-settings {
-  margin-top: 30px;
-  padding-top: 20px;
-  border-top: 1px solid var(--input-border);
-}
-
-.tts-settings h4 {
-  color: var(--text-color);
-  margin-bottom: 15px;
-}
-
-.tts-setting-group {
-  margin-bottom: 20px;
-}
-
-.tts-setting-group label {
-  display: block;
-  margin-bottom: 8px;
-  color: var(--text-color);
-  font-weight: 500;
-}
-
-.tts-voice-select {
-  width: 100%;
-  padding: 12px;
-  border-radius: 8px;
-  border: 1px solid var(--input-border);
-  background: var(--input-bg);
-  color: var(--text-color);
-  font-family: inherit;
-  margin-bottom: 10px;
-}
-
-.tts-setting-group input[type="range"] {
-  width: 70%;
-  vertical-align: middle;
-}
-
-.tts-setting-group span {
-  display: inline-block;
-  width: 25%;
-  text-align: right;
-  color: var(--text-color);
-  font-weight: 500;
-}
-
-.tts-actions {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-  margin-top: 20px;
-}
-
-.tts-actions .save-key-btn,
-.tts-actions .clear-keys-btn {
-  flex: 1;
-  padding: 12px;
-  text-align: center;
-}
-
 /* Kurdish text styles */
 .kurdish-text {
   font-family: "Speda Bold", "Poppins", sans-serif;
   font-weight: bold;
   direction: rtl;
-}
-
-/* TTS Controls for user messages */
-.user-message .tts-controls {
-  margin-top: 10px;
-  align-self: flex-end;
 }
 
 /* Language selector styles */
@@ -1163,40 +1096,6 @@ body.chats-active .container :where(.app-header, .suggestions) {
   margin-bottom: 8px;
 }
 
-/* TTS Controls */
-.tts-controls {
-  display: flex;
-  gap: 8px;
-  margin-top: 12px;
-  align-self: flex-start;
-}
-
-.tts-play-btn, .tts-stop-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  border: none;
-  background: var(--accent-color);
-  color: white;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.2rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-}
-
-.tts-play-btn:hover, .tts-stop-btn:hover {
-  background: var(--accent-hover);
-  transform: scale(1.1);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-}
-
-.tts-play-btn:active, .tts-stop-btn:active {
-  transform: scale(0.95);
-}
-
 .language-indicator {
   font-size: 0.75rem;
   padding: 3px 12px;
@@ -1264,7 +1163,6 @@ body.chats-active .container :where(.app-header, .suggestions) {
   animation: messageAppear 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   backdrop-filter: blur(5px);
   -webkit-backdrop-filter: blur(5px);
-  max-width: 100%;
 }
 
 @keyframes messageAppear {
@@ -1651,6 +1549,16 @@ body.chats-active .container :where(.app-header, .suggestions) {
   box-shadow: 0 6px 15px rgba(79, 70, 229, 0.4);
 }
 
+.prompt-form .prompt-actions #ali-alpha-btn {
+  color: white;
+  background: #ff6b6b;
+  box-shadow: 0 6px 15px rgba(255, 107, 107, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
 .prompt-form .prompt-input:valid ~ .prompt-actions #send-prompt-btn {
   display: flex;
 }
@@ -1659,6 +1567,12 @@ body.chats-active .container :where(.app-header, .suggestions) {
   background: var(--accent-hover);
   transform: scale(1.1) translateY(-3px);
   box-shadow: 0 8px 20px rgba(79, 70, 229, 0.6);
+}
+
+.prompt-form #ali-alpha-btn:hover {
+  background: #ff5252;
+  transform: scale(1.1) translateY(-3px);
+  box-shadow: 0 8px 20px rgba(255, 82, 82, 0.6);
 }
 
 .prompt-form .file-upload-wrapper :where(button, img) {

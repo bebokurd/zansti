@@ -12,11 +12,6 @@ const sidebarOverlay = document.querySelector(".sidebar-overlay");
 const sidebarToggleBtn = document.querySelector("#sidebar-toggle-btn");
 const backBtn = document.querySelector("#back-btn");
 
-// TTS Variables
-let speechSynthesis = window.speechSynthesis;
-let currentUtterance = null;
-let isSpeaking = false;
-
 // API Setup
 // Note: In a production environment, these keys should be managed through a secure backend
 // For demo purposes, we're using a more secure approach with user-provided keys
@@ -416,119 +411,6 @@ const createMessageElement = (content, ...classes) => {
   return div;
 };
 
-// Function to add TTS controls to bot messages
-const addTTSControls = (botMsgDiv, text) => {
-  const messageContent = botMsgDiv.querySelector('.message-content');
-  if (!messageContent) return;
-  
-  // Check if Web Speech API is supported
-  if (!window.speechSynthesis) {
-    console.warn('Web Speech API is not supported in this browser');
-    return;
-  }
-  
-  // Create TTS controls container
-  const ttsControls = document.createElement('div');
-  ttsControls.className = 'tts-controls';
-  
-  // Create play button
-  const playBtn = document.createElement('button');
-  playBtn.className = 'tts-play-btn material-symbols-rounded';
-  playBtn.textContent = 'play_arrow';
-  playBtn.title = 'Read aloud';
-  playBtn.setAttribute('aria-label', 'Read message aloud');
-  
-  // Create stop button
-  const stopBtn = document.createElement('button');
-  stopBtn.className = 'tts-stop-btn material-symbols-rounded';
-  stopBtn.textContent = 'stop';
-  stopBtn.title = 'Stop reading';
-  stopBtn.setAttribute('aria-label', 'Stop reading message');
-  stopBtn.style.display = 'none';
-  
-  // Add event listeners
-  playBtn.addEventListener('click', () => {
-    speakText(text, playBtn, stopBtn);
-  });
-  
-  stopBtn.addEventListener('click', () => {
-    stopSpeaking(playBtn, stopBtn);
-  });
-  
-  // Add buttons to controls container
-  ttsControls.appendChild(playBtn);
-  ttsControls.appendChild(stopBtn);
-  
-  // Add controls to message content
-  messageContent.appendChild(ttsControls);
-};
-
-// Function to speak text using Web Speech API
-const speakText = (text, playBtn, stopBtn) => {
-  // Stop any ongoing speech
-  if (speechSynthesis.speaking) {
-    speechSynthesis.cancel();
-  }
-  
-  if (text !== '') {
-    // Create new utterance
-    const utterance = new SpeechSynthesisUtterance(text);
-    
-    // Load saved settings
-    const savedVoice = localStorage.getItem('ttsVoice');
-    const savedRate = localStorage.getItem('ttsRate') || '1';
-    const savedPitch = localStorage.getItem('ttsPitch') || '1';
-    const savedVolume = localStorage.getItem('ttsVolume') || '1';
-    
-    // Apply settings to utterance
-    utterance.rate = parseFloat(savedRate);
-    utterance.pitch = parseFloat(savedPitch);
-    utterance.volume = parseFloat(savedVolume);
-    
-    // Set voice if a specific one is selected
-    if (savedVoice !== null && savedVoice !== 'default') {
-      const voices = speechSynthesis.getVoices();
-      if (voices[savedVoice]) {
-        utterance.voice = voices[savedVoice];
-      }
-    }
-    
-    // Event handlers
-    utterance.onstart = () => {
-      isSpeaking = true;
-      playBtn.style.display = 'none';
-      stopBtn.style.display = 'inline-flex';
-    };
-    
-    utterance.onend = () => {
-      isSpeaking = false;
-      playBtn.style.display = 'inline-flex';
-      stopBtn.style.display = 'none';
-    };
-    
-    utterance.onerror = (event) => {
-      console.error('SpeechSynthesisUtterance.onerror', event);
-      isSpeaking = false;
-      playBtn.style.display = 'inline-flex';
-      stopBtn.style.display = 'none';
-    };
-    
-    // Speak the utterance
-    speechSynthesis.speak(utterance);
-    currentUtterance = utterance;
-  }
-};
-
-// Function to stop speaking
-const stopSpeaking = (playBtn, stopBtn) => {
-  if (speechSynthesis.speaking) {
-    speechSynthesis.cancel();
-    isSpeaking = false;
-    playBtn.style.display = 'inline-flex';
-    stopBtn.style.display = 'none';
-  }
-};
-
 // Function to check if text is Kurdish
 const isKurdishText = (text) => {
   // Check for Kurdish-specific characters
@@ -600,9 +482,6 @@ const typingEffect = (text, textElement, botMsgDiv) => {
       clearInterval(typingInterval);
       botMsgDiv.classList.remove("loading");
       document.body.classList.remove("bot-responding");
-      
-      // Add TTS controls after the message is fully displayed
-      addTTSControls(botMsgDiv, text);
     }
   }, 30); // 30 ms delay for smoother typing
 };
@@ -1182,9 +1061,6 @@ const handleFormSubmit = (e) => {
   scrollToBottom();
   chatHistory.push({ type: 'user', text: userData.message, ts: Date.now() });
   
-  // Add TTS controls to user message
-  addTTSControls(userMsgDiv, userData.message);
-  
   // Add typing indicator
   const typingIndicator = createTypingIndicator();
   chatsContainer.appendChild(typingIndicator);
@@ -1274,12 +1150,6 @@ document.querySelector("#stop-response-btn").addEventListener("click", () => {
     loadingBotMsg.querySelector(".message-text").textContent = "Response generation stopped.";
   }
   document.body.classList.remove("bot-responding");
-  
-  // Also stop any ongoing TTS
-  if (speechSynthesis.speaking) {
-    speechSynthesis.cancel();
-    isSpeaking = false;
-  }
 });
 
 // Toggle dark/light theme
@@ -1438,17 +1308,6 @@ const securityPanel = document.getElementById('security-panel');
 const securityPanelClose = document.querySelector('.security-panel-close');
 const sidebarSecurityBtn = document.getElementById('sidebar-security');
 
-// TTS Settings Elements
-const ttsVoiceSelect = document.getElementById('tts-voice');
-const ttsRateSlider = document.getElementById('tts-rate');
-const ttsPitchSlider = document.getElementById('tts-pitch');
-const ttsVolumeSlider = document.getElementById('tts-volume');
-const rateValue = document.getElementById('rate-value');
-const pitchValue = document.getElementById('pitch-value');
-const volumeValue = document.getElementById('volume-value');
-const saveTtsSettingsBtn = document.getElementById('save-tts-settings');
-const resetTtsSettingsBtn = document.getElementById('reset-tts-settings');
-
 // Open security panel
 sidebarSecurityBtn?.addEventListener('click', () => {
   // Close sidebar first
@@ -1534,120 +1393,6 @@ document.getElementById('clear-all-keys')?.addEventListener('click', () => {
   }
 });
 
-// TTS Settings Functions
-const loadTTSVoices = () => {
-  if (typeof speechSynthesis !== 'undefined' && speechSynthesis.onvoiceschanged !== undefined) {
-    speechSynthesis.onvoiceschanged = populateVoiceList;
-  } else {
-    populateVoiceList();
-  }
-};
-
-const populateVoiceList = () => {
-  if (typeof speechSynthesis === 'undefined') return;
-  
-  const voices = speechSynthesis.getVoices();
-  ttsVoiceSelect.innerHTML = '';
-  
-  // Add default option
-  const defaultOption = document.createElement('option');
-  defaultOption.textContent = 'Default Voice';
-  defaultOption.value = 'default';
-  ttsVoiceSelect.appendChild(defaultOption);
-  
-  // Add all available voices
-  for (let i = 0; i < voices.length; i++) {
-    const option = document.createElement('option');
-    option.textContent = `${voices[i].name} (${voices[i].lang})`;
-    option.value = i;
-    ttsVoiceSelect.appendChild(option);
-  }
-  
-  // Load saved voice preference
-  const savedVoice = localStorage.getItem('ttsVoice');
-  if (savedVoice !== null) {
-    ttsVoiceSelect.value = savedVoice;
-  }
-};
-
-const updateTTSValueDisplays = () => {
-  rateValue.textContent = ttsRateSlider.value;
-  pitchValue.textContent = ttsPitchSlider.value;
-  volumeValue.textContent = ttsVolumeSlider.value;
-};
-
-const loadTTSSettings = () => {
-  // Load saved settings
-  const savedRate = localStorage.getItem('ttsRate');
-  const savedPitch = localStorage.getItem('ttsPitch');
-  const savedVolume = localStorage.getItem('ttsVolume');
-  
-  if (savedRate !== null) ttsRateSlider.value = savedRate;
-  if (savedPitch !== null) ttsPitchSlider.value = savedPitch;
-  if (savedVolume !== null) ttsVolumeSlider.value = savedVolume;
-  
-  updateTTSValueDisplays();
-};
-
-const saveTTSSettings = () => {
-  localStorage.setItem('ttsVoice', ttsVoiceSelect.value);
-  localStorage.setItem('ttsRate', ttsRateSlider.value);
-  localStorage.setItem('ttsPitch', ttsPitchSlider.value);
-  localStorage.setItem('ttsVolume', ttsVolumeSlider.value);
-  
-  alert('TTS settings saved successfully!');
-};
-
-const resetTTSSettings = () => {
-  if (confirm('Are you sure you want to reset TTS settings to default?')) {
-    ttsVoiceSelect.value = 'default';
-    ttsRateSlider.value = '1';
-    ttsPitchSlider.value = '1';
-    ttsVolumeSlider.value = '1';
-    
-    updateTTSValueDisplays();
-    
-    // Save default settings
-    saveTTSSettings();
-  }
-};
-
-// Event listeners for TTS settings
-if (ttsRateSlider) {
-  ttsRateSlider.addEventListener('input', updateTTSValueDisplays);
-}
-
-if (ttsPitchSlider) {
-  ttsPitchSlider.addEventListener('input', updateTTSValueDisplays);
-}
-
-if (ttsVolumeSlider) {
-  ttsVolumeSlider.addEventListener('input', updateTTSValueDisplays);
-}
-
-if (saveTtsSettingsBtn) {
-  saveTtsSettingsBtn.addEventListener('click', saveTTSSettings);
-}
-
-if (resetTtsSettingsBtn) {
-  resetTtsSettingsBtn.addEventListener('click', resetTTSSettings);
-}
-
-// Initialize TTS settings when security panel opens
-sidebarSecurityBtn?.addEventListener('click', () => {
-  // Close sidebar first
-  closeSidebar();
-  
-  // Open security panel
-  if (securityPanel) {
-    securityPanel.classList.add('open');
-    
-    // Load TTS settings
-    loadTTSVoices();
-    loadTTSSettings();
-  }
-});
-
 // Add welcome message
 document.addEventListener("DOMContentLoaded", () => {
   const welcomeMsgHTML = `
@@ -1669,7 +1414,4 @@ document.addEventListener("DOMContentLoaded", () => {
     welcomeMsgDiv.style.opacity = "1";
     welcomeMsgDiv.style.transform = "translateY(0)";
   }, 100);
-  
-  // Load TTS voices when DOM is loaded
-  loadTTSVoices();
 });

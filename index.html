@@ -93,6 +93,7 @@
                 <button id="add-file-btn" type="button" class="material-symbols-rounded" title="Attach file" aria-label="Attach file">attach_file</button>
               </div>
               <!-- Send Prompt and Stop Response Buttons -->
+              <a href="https://ali-alpha-ten.vercel.app/" target="_blank" id="ali-alpha-btn" class="material-symbols-rounded" title="ali-alpha API" aria-label="ali-alpha API">microphone</a>
               <button id="stop-response-btn" type="button" class="material-symbols-rounded" title="Stop generation" aria-label="Stop response generation">stop_circle</button>
               <button id="send-prompt-btn" class="material-symbols-rounded" title="Send message" aria-label="Send message">send</button>
             </div>
@@ -175,41 +176,6 @@
             <li>Keys are never sent to any server except the respective API providers</li>
             <li>For maximum security, use your own API keys</li>
           </ul>
-        </div>
-        
-        <div class="tts-settings">
-          <h4>Text-to-Speech Settings</h4>
-          <p class="security-note">Configure TTS preferences for bot responses</p>
-          
-          <div class="tts-setting-group">
-            <label for="tts-voice">Voice:</label>
-            <select id="tts-voice" class="tts-voice-select">
-              <option value="default">Default Voice</option>
-            </select>
-          </div>
-          
-          <div class="tts-setting-group">
-            <label for="tts-rate">Speech Rate:</label>
-            <input type="range" id="tts-rate" min="0.5" max="2" step="0.1" value="1">
-            <span id="rate-value">1.0</span>
-          </div>
-          
-          <div class="tts-setting-group">
-            <label for="tts-pitch">Pitch:</label>
-            <input type="range" id="tts-pitch" min="0" max="2" step="0.1" value="1">
-            <span id="pitch-value">1.0</span>
-          </div>
-          
-          <div class="tts-setting-group">
-            <label for="tts-volume">Volume:</label>
-            <input type="range" id="tts-volume" min="0" max="1" step="0.1" value="1">
-            <span id="volume-value">1.0</span>
-          </div>
-          
-          <div class="tts-actions">
-            <button id="save-tts-settings" class="save-key-btn">Save Settings</button>
-            <button id="reset-tts-settings" class="clear-keys-btn">Reset</button>
-          </div>
         </div>
       </div>
     </div>

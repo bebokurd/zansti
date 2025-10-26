@@ -339,6 +339,257 @@ body {
   direction: rtl;
 }
 
+/* Vehicle feature styles */
+.vehicle-feature {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+  border-radius: 15px;
+  padding: 15px;
+  margin: 10px 0;
+  border: 1px solid var(--accent-color);
+  box-shadow: 0 4px 10px rgba(99, 102, 241, 0.2);
+  animation: fadeIn 0.5s ease-out;
+}
+
+.vehicle-feature h4 {
+  color: var(--accent-color);
+  margin-top: 0;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vehicle-feature table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 10px 0;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  overflow: hidden;
+  animation: optimizedFadeIn 0.4s ease-out;
+}
+
+.vehicle-feature th,
+.vehicle-feature td {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 10px;
+  text-align: left;
+}
+
+.vehicle-feature th {
+  background: rgba(99, 102, 241, 0.2);
+  font-weight: 600;
+}
+
+.vehicle-feature tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.vehicle-feature tr:hover {
+  background: rgba(99, 102, 241, 0.1);
+  transform: scale(1.01);
+  transition: all 0.3s ease;
+}
+
+.vehicle-feature ul {
+  padding-left: 20px;
+  margin: 10px 0;
+}
+
+.vehicle-feature li {
+  margin-bottom: 8px;
+  line-height: 1.5;
+}
+
+.vehicle-feature li strong {
+  color: var(--accent-color);
+}
+
+/* Enhanced vehicle comparison table */
+.vehicle-comparison {
+  overflow-x: auto;
+}
+
+.vehicle-comparison table {
+  min-width: 600px;
+}
+
+.vehicle-comparison th {
+  background: linear-gradient(135deg, var(--gradient-start), var(--gradient-middle));
+  color: white;
+  font-weight: 600;
+  text-align: center;
+}
+
+.vehicle-comparison td:first-child {
+  font-weight: 500;
+  color: var(--accent-color);
+}
+
+.vehicle-comparison td strong {
+  color: var(--success-color);
+}
+
+/* Environmental impact visualization */
+.emission-savings {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin: 15px 0;
+}
+
+.emission-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.emission-label {
+  min-width: 120px;
+  font-weight: 500;
+}
+
+.emission-bar-container {
+  flex: 1;
+  height: 20px;
+  background: var(--tertiary-color);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.emission-bar-fill {
+  height: 100%;
+  border-radius: 10px;
+  transition: width 1s ease-out;
+}
+
+.emission-bar-fill.gas {
+  background: linear-gradient(90deg, #ef4444, #f97316);
+  width: 100%;
+}
+
+.emission-bar-fill.ev {
+  background: linear-gradient(90deg, #10b981, #06b6d4);
+  width: 30%;
+}
+
+.savings-highlight {
+  background: rgba(16, 185, 129, 0.2);
+  border: 1px solid var(--success-color);
+  border-radius: 10px;
+  padding: 15px;
+  text-align: center;
+  font-weight: 600;
+  color: var(--success-color);
+  animation: pulse 2s infinite;
+}
+
+/* Insurance cost estimation styles */
+.insurance-estimation {
+  background: rgba(79, 70, 229, 0.1);
+  border-radius: 15px;
+  padding: 20px;
+  margin: 15px 0;
+  border: 1px solid var(--accent-color);
+}
+
+.insurance-estimation h4 {
+  color: var(--accent-color);
+  margin-top: 0;
+  text-align: center;
+}
+
+.insurance-factors {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 15px;
+  margin: 15px 0;
+}
+
+.insurance-factor {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  padding: 15px;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.insurance-factor .factor-name {
+  font-weight: 600;
+  margin-bottom: 5px;
+  color: var(--accent-color);
+}
+
+.insurance-factor .factor-value {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-color);
+}
+
+.total-cost {
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 20px 0;
+  padding: 15px;
+  background: rgba(16, 185, 129, 0.1);
+  border-radius: 10px;
+  border: 1px solid var(--success-color);
+}
+
+.total-cost .amount {
+  color: var(--success-color);
+  font-size: 2rem;
+}
+
+/* Maintenance schedule styles */
+.maintenance-schedule {
+  background: rgba(139, 92, 246, 0.1);
+  border-radius: 15px;
+  padding: 20px;
+  margin: 15px 0;
+  border: 1px solid #8b5cf6;
+}
+
+.maintenance-schedule h4 {
+  color: #8b5cf6;
+  margin-top: 0;
+  text-align: center;
+}
+
+.maintenance-schedule ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.maintenance-schedule li {
+  padding: 12px 15px;
+  margin-bottom: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  border-left: 4px solid var(--accent-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.3s ease;
+}
+
+.maintenance-schedule li:hover {
+  background: rgba(99, 102, 241, 0.2);
+  transform: translateX(5px);
+}
+
+.maintenance-schedule .task-name {
+  font-weight: 600;
+}
+
+.maintenance-schedule .task-interval {
+  background: rgba(99, 102, 241, 0.3);
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+}
+
 /* Language selector styles */
 .language-selector-container {
   display: flex;
@@ -1087,6 +1338,7 @@ body.chats-active .container :where(.app-header, .suggestions) {
   display: flex;
   flex-direction: column;
   max-width: 85%;
+  position: relative;
 }
 
 /* Language indicator styles */
@@ -1163,6 +1415,8 @@ body.chats-active .container :where(.app-header, .suggestions) {
   animation: messageAppear 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   backdrop-filter: blur(5px);
   -webkit-backdrop-filter: blur(5px);
+  overflow: hidden;
+  background-clip: padding-box;
 }
 
 @keyframes messageAppear {
@@ -1179,6 +1433,7 @@ body.chats-active .container :where(.app-header, .suggestions) {
 .chats-container .message .message-text:hover {
   transform: translateY(-3px);
   box-shadow: var(--card-shadow), 0 12px 30px rgba(0, 0, 0, 0.15);
+  animation: messagePulse 1.5s infinite;
 }
 
 .chats-container .message .message-text::before {
@@ -1213,10 +1468,48 @@ body.chats-active .container :where(.app-header, .suggestions) {
   background: var(--message-user-bg);
   color: var(--message-user-text);
   border-bottom-right-radius: 8px;
+  background: linear-gradient(135deg, var(--message-user-bg), #3c35c5);
+  position: relative;
+  overflow: hidden;
+}
+
+.chats-container .user-message .message-text::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transform: translateX(-100%);
+  transition: transform 0.6s;
+}
+
+.chats-container .user-message .message-text:hover::after {
+  transform: translateX(100%);
 }
 
 .chats-container .bot-message .message-text {
   border-bottom-left-radius: 8px;
+  background: linear-gradient(135deg, var(--message-bot-bg), #2a3547);
+  position: relative;
+  overflow: hidden;
+}
+
+.chats-container .bot-message .message-text::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+  transform: translateX(-100%);
+  transition: transform 0.6s;
+}
+
+.chats-container .bot-message .message-text:hover::after {
+  transform: translateX(100%);
 }
 
 .chats-container .user-message .img-attachment {
@@ -1295,6 +1588,28 @@ body.chats-active .container :where(.app-header, .suggestions) {
     opacity: 1; 
     transform: scale(1); 
   }
+}
+
+/* Enhanced message animations */
+@keyframes messageEntrance {
+  0% {
+    opacity: 0;
+    transform: translateX(20px) scale(0.95);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translateX(-5px) scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes messagePulse {
+  0% { box-shadow: var(--card-shadow); }
+  50% { box-shadow: var(--card-shadow), 0 0 15px rgba(99, 102, 241, 0.3); }
+  100% { box-shadow: var(--card-shadow); }
 }
 
 .chats-container .message .download-btn {
@@ -1557,6 +1872,13 @@ body.chats-active .container :where(.app-header, .suggestions) {
   align-items: center;
   justify-content: center;
   text-decoration: none;
+  border-radius: 50%;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
+  overflow: hidden;
+  animation: pulseRed 2s infinite;
+  width: 55px;
+  height: 55px;
 }
 
 .prompt-form .prompt-input:valid ~ .prompt-actions #send-prompt-btn {
@@ -1571,8 +1893,61 @@ body.chats-active .container :where(.app-header, .suggestions) {
 
 .prompt-form #ali-alpha-btn:hover {
   background: #ff5252;
-  transform: scale(1.1) translateY(-3px);
-  box-shadow: 0 8px 20px rgba(255, 82, 82, 0.6);
+  transform: scale(1.15) translateY(-3px);
+  box-shadow: 0 8px 20px rgba(255, 82, 82, 0.8);
+  animation: none;
+}
+
+/* Custom Microphone SVG Icon */
+.microphone-icon {
+  width: 24px;
+  height: 24px;
+  fill: currentColor;
+  transition: all 0.3s ease;
+  filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.3));
+}
+
+#ali-alpha-btn:hover .microphone-icon {
+  transform: scale(1.1);
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.5));
+}
+
+.prompt-form #ali-alpha-btn::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: rgba(255, 255, 255, 0.1);
+  transform: rotate(30deg);
+  transition: all 0.6s;
+}
+
+.prompt-form #ali-alpha-btn:hover::before {
+  transform: rotate(30deg) translate(20%, 20%);
+}
+
+@keyframes pulseRed {
+  0% { box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.4); }
+  70% { box-shadow: 0 0 0 12px rgba(255, 107, 107, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 107, 107, 0); }
+}
+
+/* Enhanced pulse animation for microphone */
+@keyframes pulseRed {
+  0% { 
+    box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.4),
+                0 0 0 0 rgba(255, 107, 107, 0.2);
+  }
+  70% { 
+    box-shadow: 0 0 0 12px rgba(255, 107, 107, 0),
+                0 0 0 20px rgba(255, 107, 107, 0);
+  }
+  100% { 
+    box-shadow: 0 0 0 0 rgba(255, 107, 107, 0),
+                0 0 0 0 rgba(255, 107, 107, 0);
+  }
 }
 
 .prompt-form .file-upload-wrapper :where(button, img) {

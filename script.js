@@ -411,6 +411,170 @@ const createMessageElement = (content, ...classes) => {
   return div;
 };
 
+// Function to check if message is related to vehicles
+const isVehicleQuery = (message) => {
+  const lowerMessage = message.toLowerCase();
+  const vehicleKeywords = [
+    'car', 'vehicle', 'automobile', 'electric car', 'ev', 'hybrid',
+    'fuel efficiency', 'mpg', 'maintenance', 'oil change', 'tire',
+    'brake', 'battery', 'engine', 'transmission', 'fuel', 'emission',
+    'insurance', 'cost', 'price', 'value', 'depreciation', 'repair'
+  ];
+  
+  return vehicleKeywords.some(keyword => lowerMessage.includes(keyword));
+};
+
+// Function to generate vehicle maintenance schedule
+const generateMaintenanceSchedule = (vehicleType = 'car') => {
+  const schedules = {
+    car: [
+      { task: 'Oil Change', interval: 'Every 3,000-5,000 miles or 3-6 months' },
+      { task: 'Tire Rotation', interval: 'Every 5,000-7,500 miles' },
+      { task: 'Air Filter Replacement', interval: 'Every 12,000-15,000 miles' },
+      { task: 'Brake Inspection', interval: 'Every 10,000 miles' },
+      { task: 'Coolant Flush', interval: 'Every 30,000 miles' },
+      { task: 'Transmission Fluid Change', interval: 'Every 30,000-60,000 miles' },
+      { task: 'Spark Plug Replacement', interval: 'Every 30,000-100,000 miles' }
+    ],
+    ev: [
+      { task: 'Battery Health Check', interval: 'Every 6 months' },
+      { task: 'Tire Rotation', interval: 'Every 5,000-7,500 miles' },
+      { task: 'Brake Fluid Check', interval: 'Every 2 years' },
+      { task: 'Coolant System Check', interval: 'Every 30,000 miles' },
+      { task: '12V Battery Check', interval: 'Every 6 months' },
+      { task: 'Motor and Inverter Inspection', interval: 'Every 20,000 miles' },
+      { task: 'Regenerative Brake System Check', interval: 'Every 15,000 miles' }
+    ],
+    hybrid: [
+      { task: 'Oil Change', interval: 'Every 5,000-10,000 miles' },
+      { task: 'Tire Rotation', interval: 'Every 5,000-7,500 miles' },
+      { task: 'Battery Health Check', interval: 'Every 6 months' },
+      { task: 'Brake Inspection', interval: 'Every 10,000 miles' },
+      { task: 'Coolant Flush', interval: 'Every 30,000 miles' },
+      { task: 'Hybrid System Inspection', interval: 'Every 15,000 miles' },
+      { task: 'Transmission Fluid Change', interval: 'Every 30,000-60,000 miles' }
+    ]
+  };
+  
+  return schedules[vehicleType] || schedules.car;
+};
+
+// Function to calculate fuel cost
+const calculateFuelCost = (mpg, distance, fuelPrice) => {
+  if (!mpg || !distance || !fuelPrice) return null;
+  const gallonsNeeded = distance / mpg;
+  return (gallonsNeeded * fuelPrice).toFixed(2);
+};
+
+// Function to calculate emission savings
+const calculateEmissionSavings = (gasMpg, evMpg, distance, gasEmissionFactor = 0.35, evEmissionFactor = 0.1) => {
+  // Gas emission factor in kg CO2 per mile, EV emission factor accounts for electricity generation
+  const gasEmissions = distance * gasEmissionFactor;
+  const evEmissions = distance * evEmissionFactor;
+  const savings = gasEmissions - evEmissions;
+  
+  return {
+    gasEmissions: gasEmissions.toFixed(2),
+    evEmissions: evEmissions.toFixed(2),
+    savings: savings.toFixed(2)
+  };
+};
+
+// Function to estimate insurance cost
+const estimateInsuranceCost = (vehicleType, age, value) => {
+  // Base rates per year
+  const baseRates = {
+    car: 1200,
+    ev: 1500,
+    hybrid: 1300
+  };
+  
+  // Age adjustment factors
+  const ageFactors = {
+    new: 1.2,    // 0-2 years
+    young: 1.0,  // 3-5 years
+    mid: 0.8,    // 6-10 years
+    old: 0.6     // 11+ years
+  };
+  
+  // Value adjustment (per $10,000 of value)
+  const valueFactor = value ? (value / 10000) * 100 : 0;
+  
+  const baseRate = baseRates[vehicleType] || baseRates.car;
+  const ageFactor = ageFactors[age] || ageFactors.mid;
+  
+  // Calculate estimated annual insurance cost
+  const estimatedCost = (baseRate * ageFactor) + valueFactor;
+  
+  return estimatedCost.toFixed(2);
+};
+
+// Function to compare vehicles
+const compareVehicles = (vehicle1, vehicle2) => {
+  const comparisons = {
+    teslaModel3: {
+      name: 'Tesla Model 3',
+      type: 'Electric',
+      efficiency: '120 MPGe',
+      range: '272 miles',
+      chargingTime: '15 min (Supercharger)',
+      maintenance: 'Low',
+      emissions: '0g/mile',
+      insurance: '$1,500/year',
+      depreciation: '20%/year'
+    },
+    toyotaCamry: {
+      name: 'Toyota Camry',
+      type: 'Gasoline',
+      efficiency: '28 MPG',
+      range: '420 miles',
+      chargingTime: '5 min',
+      maintenance: 'Medium',
+      emissions: '350g/mile',
+      insurance: '$1,200/year',
+      depreciation: '15%/year'
+    },
+    toyotaPrius: {
+      name: 'Toyota Prius',
+      type: 'Hybrid',
+      efficiency: '55 MPG',
+      range: '550 miles',
+      chargingTime: 'N/A',
+      maintenance: 'Low',
+      emissions: '150g/mile',
+      insurance: '$1,300/year',
+      depreciation: '18%/year'
+    },
+    fordF150: {
+      name: 'Ford F-150',
+      type: 'Gasoline',
+      efficiency: '20 MPG',
+      range: '450 miles',
+      chargingTime: '5 min',
+      maintenance: 'Medium',
+      emissions: '450g/mile',
+      insurance: '$1,800/year',
+      depreciation: '17%/year'
+    },
+    chevyBolt: {
+      name: 'Chevy Bolt EV',
+      type: 'Electric',
+      efficiency: '118 MPGe',
+      range: '259 miles',
+      chargingTime: '30 min (DC Fast)',
+      maintenance: 'Low',
+      emissions: '0g/mile',
+      insurance: '$1,600/year',
+      depreciation: '22%/year'
+    }
+  };
+  
+  const v1 = comparisons[vehicle1] || comparisons.teslaModel3;
+  const v2 = comparisons[vehicle2] || comparisons.toyotaCamry;
+  
+  return { v1, v2 };
+};
+
 // Function to check if text is Kurdish
 const isKurdishText = (text) => {
   // Check for Kurdish-specific characters
@@ -1025,6 +1189,228 @@ const handleFormSubmit = (e) => {
     scrollToBottom();
     return;
   }
+  
+  // Handle vehicle maintenance query
+  if (userMessage.toLowerCase().includes('maintenance') && isVehicleQuery(userMessage)) {
+    const vehicleType = userMessage.toLowerCase().includes('electric') || userMessage.toLowerCase().includes('ev') ? 'ev' : 
+                       userMessage.toLowerCase().includes('hybrid') ? 'hybrid' : 'car';
+    const schedule = generateMaintenanceSchedule(vehicleType);
+    
+    const scheduleList = schedule.map(item => 
+      `<li><strong>${item.task}:</strong> ${item.interval}</li>`
+    ).join('');
+    
+    const response = `
+      <div class="avatar">
+        <img src="https://i.ibb.co/21jpMNhw/234421810-326887782452132-7028869078528396806-n-removebg-preview-1.png" alt="Bot Avatar" class="avatar-image">
+      </div>
+      <div class="message-content">
+        <p class="message-text"><strong>Vehicle Maintenance Schedule (${vehicleType.toUpperCase()}):</strong></p>
+        <ul>${scheduleList}</ul>
+        <p>Would you like more specific information about any of these maintenance tasks?</p>
+      </div>
+    `;
+    
+    promptInput.value = "";
+    const botMsgDiv = createMessageElement(response, "bot-message");
+    chatsContainer.appendChild(botMsgDiv);
+    scrollToBottom();
+    addTTSControls(botMsgDiv, response.replace(/<[^>]*>/g, ''));
+    return;
+  }
+  
+  // Handle vehicle comparison
+  if (userMessage.toLowerCase().includes('compare') && isVehicleQuery(userMessage)) {
+    const response = `
+      <div class="avatar">
+        <img src="https://i.ibb.co/21jpMNhw/234421810-326887782452132-7028869078528396806-n-removebg-preview-1.png" alt="Bot Avatar" class="avatar-image">
+      </div>
+      <div class="message-content">
+        <p class="message-text"><strong>Vehicle Comparison:</strong></p>
+        <table style="width:100%; border-collapse: collapse; margin: 10px 0;">
+          <tr>
+            <th style="border: 1px solid #444; padding: 8px; text-align: left;">Feature</th>
+            <th style="border: 1px solid #444; padding: 8px; text-align: left;">Tesla Model 3</th>
+            <th style="border: 1px solid #444; padding: 8px; text-align: left;">Toyota Camry</th>
+          </tr>
+          <tr>
+            <td style="border: 1px solid #444; padding: 8px;">Type</td>
+            <td style="border: 1px solid #444; padding: 8px;">Electric</td>
+            <td style="border: 1px solid #444; padding: 8px;">Gasoline</td>
+          </tr>
+          <tr>
+            <td style="border: 1px solid #444; padding: 8px;">Efficiency</td>
+            <td style="border: 1px solid #444; padding: 8px;">120 MPGe</td>
+            <td style="border: 1px solid #444; padding: 8px;">28 MPG</td>
+          </tr>
+          <tr>
+            <td style="border: 1px solid #444; padding: 8px;">Range</td>
+            <td style="border: 1px solid #444; padding: 8px;">272 miles</td>
+            <td style="border: 1px solid #444; padding: 8px;">420 miles</td>
+          </tr>
+          <tr>
+            <td style="border: 1px solid #444; padding: 8px;">Charging/Fueling</td>
+            <td style="border: 1px solid #444; padding: 8px;">15 min (Supercharger)</td>
+            <td style="border: 1px solid #444; padding: 8px;">5 min</td>
+          </tr>
+          <tr>
+            <td style="border: 1px solid #444; padding: 8px;">Maintenance</td>
+            <td style="border: 1px solid #444; padding: 8px;">Low</td>
+            <td style="border: 1px solid #444; padding: 8px;">Medium</td>
+          </tr>
+          <tr>
+            <td style="border: 1px solid #444; padding: 8px;">Emissions</td>
+            <td style="border: 1px solid #444; padding: 8px;">0g/mile</td>
+            <td style="border: 1px solid #444; padding: 8px;">350g/mile</td>
+          </tr>
+          <tr>
+            <td style="border: 1px solid #444; padding: 8px;">Insurance</td>
+            <td style="border: 1px solid #444; padding: 8px;">$1,500/year</td>
+            <td style="border: 1px solid #444; padding: 8px;">$1,200/year</td>
+          </tr>
+          <tr>
+            <td style="border: 1px solid #444; padding: 8px;">Depreciation</td>
+            <td style="border: 1px solid #444; padding: 8px;">20%/year</td>
+            <td style="border: 1px solid #444; padding: 8px;">15%/year</td>
+          </tr>
+        </table>
+        <p>Would you like to compare different vehicles or get more details about any specific model?</p>
+      </div>
+    `;
+    
+    promptInput.value = "";
+    const botMsgDiv = createMessageElement(response, "bot-message");
+    chatsContainer.appendChild(botMsgDiv);
+    scrollToBottom();
+    addTTSControls(botMsgDiv, response.replace(/<[^>]*>/g, ''));
+    return;
+  }
+  
+  // Handle fuel cost calculation
+  if ((userMessage.toLowerCase().includes('fuel cost') || userMessage.toLowerCase().includes('cost to drive')) && isVehicleQuery(userMessage)) {
+    // Extract numbers from message
+    const numbers = userMessage.match(/\d+/g);
+    if (numbers && numbers.length >= 3) {
+      const mpg = parseFloat(numbers[0]);
+      const distance = parseFloat(numbers[1]);
+      const fuelPrice = parseFloat(numbers[2]);
+      
+      const cost = calculateFuelCost(mpg, distance, fuelPrice);
+      
+      if (cost) {
+        const response = `
+          <div class="avatar">
+            <img src="https://i.ibb.co/21jpMNhw/234421810-326887782452132-7028869078528396806-n-removebg-preview-1.png" alt="Bot Avatar" class="avatar-image">
+          </div>
+          <div class="message-content">
+            <p class="message-text">Based on your inputs:
+            <ul>
+              <li>MPG: ${mpg}</li>
+              <li>Distance: ${distance} miles</li>
+              <li>Fuel Price: $${fuelPrice.toFixed(2)} per gallon</li>
+              <li><strong>Estimated Fuel Cost: $${cost}</strong></li>
+            </ul>
+            Would you like to calculate for a different scenario?</p>
+          </div>
+        `;
+        
+        promptInput.value = "";
+        const botMsgDiv = createMessageElement(response, "bot-message");
+        chatsContainer.appendChild(botMsgDiv);
+        scrollToBottom();
+        addTTSControls(botMsgDiv, response.replace(/<[^>]*>/g, ''));
+        return;
+      }
+    }
+  }
+  
+  // Handle emission savings calculation
+  if ((userMessage.toLowerCase().includes('emission') || userMessage.toLowerCase().includes('environmental impact')) && isVehicleQuery(userMessage)) {
+    // Extract numbers from message
+    const numbers = userMessage.match(/\d+/g);
+    if (numbers && numbers.length >= 2) {
+      const gasMpg = parseFloat(numbers[0]);
+      const distance = parseFloat(numbers[1]);
+      
+      const savings = calculateEmissionSavings(gasMpg, 120, distance); // Assuming 120 MPGe for EV
+      
+      const response = `
+        <div class="avatar">
+          <img src="https://i.ibb.co/21jpMNhw/234421810-326887782452132-7028869078528396806-n-removebg-preview-1.png" alt="Bot Avatar" class="avatar-image">
+        </div>
+        <div class="message-content">
+          <p class="message-text"><strong>Environmental Impact Comparison:</strong></p>
+          <ul>
+            <li>Distance: ${distance} miles</li>
+            <li>Gas Vehicle Emissions: ${savings.gasEmissions} kg CO2</li>
+            <li>Electric Vehicle Emissions: ${savings.evEmissions} kg CO2</li>
+            <li><strong>Emission Savings: ${savings.savings} kg CO2</strong></li>
+          </ul>
+          <p>Switching to an electric vehicle could save approximately ${savings.savings} kg of CO2 emissions for this trip!</p>
+        </div>
+      `;
+      
+      promptInput.value = "";
+      const botMsgDiv = createMessageElement(response, "bot-message");
+      chatsContainer.appendChild(botMsgDiv);
+      scrollToBottom();
+      addTTSControls(botMsgDiv, response.replace(/<[^>]*>/g, ''));
+      return;
+    }
+  }
+  
+  // Handle insurance cost estimation
+  if ((userMessage.toLowerCase().includes('insurance') || userMessage.toLowerCase().includes('cost')) && isVehicleQuery(userMessage)) {
+    // Extract vehicle type, age, and value from message
+    const lowerMessage = userMessage.toLowerCase();
+    const vehicleType = lowerMessage.includes('electric') || lowerMessage.includes('ev') ? 'ev' : 
+                       lowerMessage.includes('hybrid') ? 'hybrid' : 'car';
+    
+    // Extract numbers for age and value
+    const numbers = userMessage.match(/\d+/g);
+    let age = 'mid';
+    let value = 0;
+    
+    if (numbers) {
+      if (numbers.length >= 1) {
+        const ageNum = parseInt(numbers[0]);
+        if (ageNum <= 2) age = 'new';
+        else if (ageNum <= 5) age = 'young';
+        else if (ageNum <= 10) age = 'mid';
+        else age = 'old';
+      }
+      
+      if (numbers.length >= 2) {
+        value = parseInt(numbers[1]) * 1000; // Assuming value is in thousands
+      }
+    }
+    
+    const insuranceCost = estimateInsuranceCost(vehicleType, age, value);
+    
+    const response = `
+      <div class="avatar">
+        <img src="https://i.ibb.co/21jpMNhw/234421810-326887782452132-7028869078528396806-n-removebg-preview-1.png" alt="Bot Avatar" class="avatar-image">
+      </div>
+      <div class="message-content">
+        <p class="message-text"><strong>Insurance Cost Estimation:</strong></p>
+        <ul>
+          <li>Vehicle Type: ${vehicleType.toUpperCase()}</li>
+          <li>Vehicle Age: ${age}</li>
+          ${value > 0 ? `<li>Vehicle Value: $${value.toLocaleString()}</li>` : ''}
+          <li><strong>Estimated Annual Insurance: $${insuranceCost}</strong></li>
+        </ul>
+        <p>Note: This is an estimate based on average rates. Actual costs may vary based on location, driving history, and other factors.</p>
+      </div>
+    `;
+    
+    promptInput.value = "";
+    const botMsgDiv = createMessageElement(response, "bot-message");
+    chatsContainer.appendChild(botMsgDiv);
+    scrollToBottom();
+    addTTSControls(botMsgDiv, response.replace(/<[^>]*>/g, ''));
+    return;
+  }
+  
   // Show recent chats
   if (userMessage.toLowerCase() === '/recent') {
     promptInput.value = "";
@@ -1057,6 +1443,7 @@ const handleFormSubmit = (e) => {
   `;
   const userMsgDiv = createMessageElement(userMsgHTML, "user-message");
   userMsgDiv.querySelector(".message-text").textContent = userData.message;
+  userMsgDiv.style.animation = "messageEntrance 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)";
   chatsContainer.appendChild(userMsgDiv);
   scrollToBottom();
   chatHistory.push({ type: 'user', text: userData.message, ts: Date.now() });
@@ -1080,6 +1467,7 @@ const handleFormSubmit = (e) => {
       </div>
     `;
     const botMsgDiv = createMessageElement(botMsgHTML, "bot-message", "loading");
+    botMsgDiv.style.animation = "messageEntrance 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)";
     chatsContainer.appendChild(botMsgDiv);
     scrollToBottom();
     generateResponse(botMsgDiv);

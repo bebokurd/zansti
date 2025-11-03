@@ -12,71 +12,69 @@ const sidebarOverlay = document.querySelector(".sidebar-overlay");
 const sidebarToggleBtn = document.querySelector("#sidebar-toggle-btn");
 const backBtn = document.querySelector("#back-btn");
 
-// API Setup
-// Note: In a production environment, these keys should be managed through a secure backend
-// For demo purposes, we're using a more secure approach with user-provided keys
-const GEMINI_API_KEY = getGeminiApiKey() || "AIzaSyCq2YpHXbY90aMIZmCgll4QxfKIcAU4rWY";
-const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-const GEMINI_IMAGE_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent?key=${GEMINI_API_KEY}`;
-
-// DeepAI API Setup (for image generation)
-const DEEP_AI_API_URL = "https://api.deepai.org/api/text2img";
-const DEEP_AI_API_KEY = getDeepAiApiKey() || "b32201ab-245b-4103-b5e5-73823fcb11a8";
-
-// Secure API key management functions
-function getGeminiApiKey() {
-  // In a real application, this would be handled by a backend service
-  // For this client-side demo, we're using localStorage with additional security measures
-  try {
-    const encryptedKey = localStorage.getItem('geminiApiKey');
-    if (encryptedKey) {
-      // In a real implementation, we would decrypt the key
-      // For demo purposes, we're just returning it as-is
-      return encryptedKey;
-    }
-    return null;
-  } catch (e) {
-    console.warn('Could not retrieve Gemini API key');
-    return null;
+// ==========================================
+// CONSTANTS AND CONFIGURATION
+// ==========================================
+const CONFIG = {
+  API: {
+    GEMINI_MODEL: 'gemini-2.5-flash',
+    GEMINI_IMAGE_MODEL: 'gemini-pro-vision',
+    GEMINI_BASE_URL: 'https://generativelanguage.googleapis.com/v1beta/models',
+    DEEP_AI_URL: 'https://api.deepai.org/api/text2img',
+    POLLINATIONS_BASE_URL: 'https://image.pollinations.ai/prompt/',
+    HF_BASE_URL: 'https://api-inference.huggingface.co/models',
+    HF_DEFAULT_MODEL: 'stabilityai/stable-diffusion-2-1'
+  },
+  DEFAULTS: {
+    GEMINI_KEY: 'AIzaSyCq2YpHXbY90aMIZmCgll4QxfKIcAU4rWY',
+    DEEP_AI_KEY: 'b32201ab-245b-4103-b5e5-73823fcb11a8'
+  },
+  LIMITS: {
+    FILE_SIZE: 5 * 1024 * 1024, // 5MB
+    BASE64_SIZE: 10 * 1024 * 1024, // 10MB
+    MAX_PROMPT_LENGTH: 1000,
+    MAX_IMAGE_PROMPT_LENGTH: 800,
+    RATE_LIMIT_WINDOW: 60000, // 1 minute
+    MAX_REQUESTS_PER_WINDOW: 10,
+    MAX_CONTEXT_HISTORY: 5,
+    TYPING_DELAY: 25,
+    TYPING_MAX_DELAY: 50
+  },
+  TIMEOUTS: {
+    IMAGE_LOAD: 25000,
+    API_REQUEST: 60000,
+    DEEP_AI: 30000,
+    HF_REQUEST: 60000
+  },
+  ANIMATIONS: {
+    TYPING_INDICATOR_DELAY: 800,
+    SCROLL_UPDATE_INTERVAL: 5 // Update scroll every N words
   }
-}
+};
 
-function getDeepAiApiKey() {
-  try {
-    const encryptedKey = localStorage.getItem('deepAiApiKey');
-    if (encryptedKey) {
-      // In a real implementation, we would decrypt the key
-      // For demo purposes, we're just returning it as-is
-      return encryptedKey;
-    }
-    return null;
-  } catch (e) {
-    console.warn('Could not retrieve DeepAI API key');
-    return null;
-  }
-}
-
-// Simple encryption/decryption functions for demo purposes
-// Note: In a production environment, this should be handled server-side
-function simpleEncrypt(text, key = 'zansti-sardam-key') {
+// ==========================================
+// UTILITY FUNCTIONS - API KEY MANAGEMENT
+// ==========================================
+class ApiKeyManager {
+  static ENCRYPTION_KEY = 'zansti-sardam-key';
+  
+  static encrypt(text, key = this.ENCRYPTION_KEY) {
   if (!text) return '';
   try {
-    // Simple XOR encryption for demo purposes only
     let result = '';
     for (let i = 0; i < text.length; i++) {
       result += String.fromCharCode(text.charCodeAt(i) ^ key.charCodeAt(i % key.length));
     }
-    return btoa(result); // Base64 encode
+      return btoa(result);
   } catch (e) {
     console.error('Encryption failed:', e);
-    return text; // Return original if encryption fails
+      return text;
   }
 }
 
-function simpleDecrypt(encryptedText, key = 'zansti-sardam-key') {
+  static decrypt(encryptedText, key = this.ENCRYPTION_KEY) {
   if (!encryptedText) return '';
   try {
-    // Base64 decode then XOR decryption
     const text = atob(encryptedText);
     let result = '';
     for (let i = 0; i < text.length; i++) {
@@ -85,86 +83,67 @@ function simpleDecrypt(encryptedText, key = 'zansti-sardam-key') {
     return result;
   } catch (e) {
     console.error('Decryption failed:', e);
-    return encryptedText; // Return original if decryption fails
-  }
-}
-
-// Function to securely set API keys
-function setApiKeys(geminiKey, deepAiKey) {
-  try {
-    if (geminiKey) {
-      const encryptedKey = simpleEncrypt(geminiKey);
-      localStorage.setItem('geminiApiKey', encryptedKey);
+      return encryptedText;
     }
-    if (deepAiKey) {
-      const encryptedKey = simpleEncrypt(deepAiKey);
-      localStorage.setItem('deepAiApiKey', encryptedKey);
-    }
-    return true;
-  } catch (e) {
-    console.error('Failed to store API keys:', e);
-    return false;
   }
-}
-
-// Enhanced API key retrieval with decryption
-function getGeminiApiKey() {
-  try {
-    const encryptedKey = localStorage.getItem('geminiApiKey');
-    if (encryptedKey) {
-      return simpleDecrypt(encryptedKey);
-    }
-    return null;
-  } catch (e) {
-    console.warn('Could not retrieve or decrypt Gemini API key');
-    return null;
-  }
-}
-
-function getDeepAiApiKey() {
-  try {
-    const encryptedKey = localStorage.getItem('deepAiApiKey');
-    if (encryptedKey) {
-      return simpleDecrypt(encryptedKey);
-    }
-    return null;
-  } catch (e) {
-    console.warn('Could not retrieve or decrypt DeepAI API key');
-    return null;
-  }
-}
-
-// Pollinations API (browser-friendly, no key, good CORS)
-const POLLINATIONS_BASE_URL = "https://image.pollinations.ai/prompt/";
-
-// Hugging Face Inference API (optional, user-provided key)
-// Key is NOT hardcoded; it can be provided at runtime via `/set hf <key>` command
-const getHfApiKey = () => {
-  try {
-    const encryptedKey = localStorage.getItem('hfApiKey');
-    if (encryptedKey) {
-      return simpleDecrypt(encryptedKey);
-    }
-    return '';
-  } catch (e) {
-    console.warn('Could not retrieve or decrypt Hugging Face API key');
-    return '';
-  }
-};
-const setHfApiKey = (key) => {
-  if (typeof key === 'string' && key.trim()) {
+  
+  static get(keyName) {
     try {
-      const encryptedKey = simpleEncrypt(key.trim());
-      localStorage.setItem('hfApiKey', encryptedKey);
-      return true;
-    } catch (e) {
-      console.error('Failed to encrypt and store Hugging Face API key:', e);
+      const encryptedKey = localStorage.getItem(keyName);
+      return encryptedKey ? this.decrypt(encryptedKey) : null;
+  } catch (e) {
+      console.warn(`Could not retrieve ${keyName}:`, e);
+    return null;
+  }
+}
+
+  static set(keyName, keyValue) {
+    try {
+      if (keyValue) {
+        const encryptedKey = this.encrypt(keyValue);
+        localStorage.setItem(keyName, encryptedKey);
+        return true;
+      }
+      return false;
+  } catch (e) {
+      console.error(`Failed to store ${keyName}:`, e);
       return false;
     }
   }
-  return false;
+  
+  static remove(keyName) {
+    try {
+      localStorage.removeItem(keyName);
+    return true;
+  } catch (e) {
+      console.error(`Failed to remove ${keyName}:`, e);
+    return false;
+    }
+  }
+}
+
+// API key getters with fallback to defaults
+const getGeminiApiKey = () => ApiKeyManager.get('geminiApiKey') || CONFIG.DEFAULTS.GEMINI_KEY;
+const getDeepAiApiKey = () => ApiKeyManager.get('deepAiApiKey') || CONFIG.DEFAULTS.DEEP_AI_KEY;
+const getHfApiKey = () => ApiKeyManager.get('hfApiKey') || '';
+const setHfApiKey = (key) => typeof key === 'string' && key.trim() 
+  ? ApiKeyManager.set('hfApiKey', key.trim()) 
+  : false;
+
+// Build API URLs dynamically
+const buildGeminiApiUrl = (model = CONFIG.API.GEMINI_MODEL) => 
+  `${CONFIG.API.GEMINI_BASE_URL}/${model}:generateContent?key=${getGeminiApiKey()}`;
+
+const GEMINI_API_URL = buildGeminiApiUrl();
+const GEMINI_IMAGE_API_URL = buildGeminiApiUrl(CONFIG.API.GEMINI_IMAGE_MODEL);
+
+// Function to securely set API keys
+const setApiKeys = (geminiKey, deepAiKey) => {
+  const results = [];
+  if (geminiKey) results.push(ApiKeyManager.set('geminiApiKey', geminiKey));
+  if (deepAiKey) results.push(ApiKeyManager.set('deepAiApiKey', deepAiKey));
+  return results.every(r => r);
 };
-const HF_DEFAULT_MODEL = "stabilityai/stable-diffusion-2-1";
 
 let controller, typingInterval;
 const chatHistory = [];
@@ -172,34 +151,142 @@ const userData = { message: "", file: {} };
 let isOnline = true;
 const networkStatus = document.getElementById('network-status');
 
-// Rate limiting implementation
-const RATE_LIMIT_WINDOW = 60000; // 1 minute
-const MAX_REQUESTS_PER_WINDOW = 10;
-let requestCount = 0;
-let rateLimitResetTime = Date.now() + RATE_LIMIT_WINDOW;
+// Voice recognition state
+let recognition = null;
+let isListening = false;
 
-function checkRateLimit() {
-  const now = Date.now();
+// Chat persistence keys
+const STORAGE_KEYS = {
+  CHAT_HISTORY: 'zansti_chat_history',
+  THEME: 'zansti_theme',
+  LANGUAGE: 'zansti_language'
+};
+
+// Enhanced system prompts for better AI responses
+const SYSTEM_PROMPTS = {
+  default: `You are zansti sardam AI, an intelligent and helpful assistant created by chya luqman. You are knowledgeable, friendly, and always strive to provide accurate and helpful responses.
+
+Guidelines:
+- Be concise but comprehensive
+- Use clear, natural language
+- Format responses with proper structure (use line breaks, lists, or paragraphs as appropriate)
+- If you don't know something, admit it honestly
+- Be respectful and professional
+- Support multiple languages (English, Kurdish/Sorani, Arabic)
+- When discussing technical topics, explain in accessible terms
+- For code examples, provide clear, commented code
+- Always prioritize accuracy and user safety`,
+
+  vehicle: `You are zansti sardam AI specializing in vehicle information. Provide accurate, detailed information about cars, EVs, maintenance, and automotive topics.
+
+- Include specific numbers and metrics when relevant
+- Compare options objectively
+- Mention environmental impact when discussing EVs vs gas vehicles
+- Provide practical, actionable advice
+- Include maintenance schedules and cost estimates when relevant`,
+
+  coding: `You are zansti sardam AI specializing in programming and software development. Provide clear, accurate code examples and explanations.
+
+- Include working code examples when requested
+- Explain complex concepts in simple terms
+- Mention best practices and common pitfalls
+- Support multiple programming languages
+- Format code clearly with proper indentation
+- Explain what the code does, not just provide it`,
+
+  creative: `You are zansti sardam AI with creative writing capabilities. Help users with storytelling, poetry, and creative content.
+
+- Be imaginative and creative
+- Adapt to different writing styles as requested
+- Provide original content
+- Use vivid descriptions and engaging language
+- Match the tone and style requested by the user`
+};
+
+// Get appropriate system prompt based on message content
+const getSystemPrompt = (message) => {
+  const lowerMessage = message.toLowerCase();
   
-  // Reset counter if window has passed
-  if (now > rateLimitResetTime) {
-    requestCount = 0;
-    rateLimitResetTime = now + RATE_LIMIT_WINDOW;
+  if (isVehicleQuery(message)) {
+    return SYSTEM_PROMPTS.vehicle;
   }
   
-  // Check if limit exceeded
-  if (requestCount >= MAX_REQUESTS_PER_WINDOW) {
-    const timeLeft = Math.ceil((rateLimitResetTime - now) / 1000);
-    throw new Error(`Rate limit exceeded. Please wait ${timeLeft} seconds before making another request.`);
+  if (lowerMessage.includes('code') || lowerMessage.includes('programming') || 
+      lowerMessage.includes('function') || lowerMessage.includes('script') ||
+      lowerMessage.includes('python') || lowerMessage.includes('javascript') ||
+      lowerMessage.includes('html') || lowerMessage.includes('css')) {
+    return SYSTEM_PROMPTS.coding;
   }
   
-  // Increment counter
-  requestCount++;
-  return true;
+  if (lowerMessage.includes('write') || lowerMessage.includes('poem') || 
+      lowerMessage.includes('story') || lowerMessage.includes('creative') ||
+      lowerMessage.includes('narrative')) {
+    return SYSTEM_PROMPTS.creative;
+  }
+  
+  return SYSTEM_PROMPTS.default;
+};
+
+// ==========================================
+// UTILITY CLASSES AND MANAGERS
+// ==========================================
+
+// Rate Limiter with improved implementation
+class RateLimiter {
+  constructor(windowMs = CONFIG.LIMITS.RATE_LIMIT_WINDOW, maxRequests = CONFIG.LIMITS.MAX_REQUESTS_PER_WINDOW) {
+    this.windowMs = windowMs;
+    this.maxRequests = maxRequests;
+    this.requestCount = 0;
+    this.resetTime = Date.now() + windowMs;
+  }
+  
+  check() {
+    const now = Date.now();
+    
+    if (now > this.resetTime) {
+      this.requestCount = 0;
+      this.resetTime = now + this.windowMs;
+    }
+    
+    if (this.requestCount >= this.maxRequests) {
+      const timeLeft = Math.ceil((this.resetTime - now) / 1000);
+      throw new Error(`Rate limit exceeded. Please wait ${timeLeft} seconds before making another request.`);
+    }
+    
+    this.requestCount++;
+    return true;
+  }
+  
+  reset() {
+    this.requestCount = 0;
+    this.resetTime = Date.now() + this.windowMs;
+  }
 }
 
-// Enhanced file validation
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+// Global rate limiter instance
+const rateLimiter = new RateLimiter();
+
+// Enhanced context builder for conversation history
+const buildConversationContext = (history = chatHistory, maxHistory = CONFIG.LIMITS.MAX_CONTEXT_HISTORY) => {
+  if (!history?.length) return [];
+  
+  const recentMessages = history.slice(-maxHistory * 2);
+  const context = [];
+  
+  for (const item of recentMessages) {
+    if (item.type === 'user') {
+      context.push({ role: 'user', parts: [{ text: item.text }] });
+    } else if (item.type === 'bot') {
+      context.push({ role: 'model', parts: [{ text: item.text }] });
+    }
+  }
+  
+  return context;
+};
+
+// ==========================================
+// VALIDATION CONSTANTS
+// ==========================================
 const ALLOWED_FILE_TYPES = [
   'image/jpeg',
   'image/png',
@@ -208,6 +295,12 @@ const ALLOWED_FILE_TYPES = [
   'text/csv',
   'application/pdf'
 ];
+
+const AVATAR_IMAGE_URL = 'https://i.ibb.co/21jpMNhw/234421810-326887782452132-7028869078528396806-n-removebg-preview-1.png';
+
+// Legacy functions for backward compatibility (using ApiKeyManager internally)
+const simpleEncrypt = (text, key) => ApiKeyManager.encrypt(text, key);
+const simpleDecrypt = (encryptedText, key) => ApiKeyManager.decrypt(encryptedText, key);
 
 // Basic translations for UI (en, ckb (Sorani), ar)
 const translations = {
@@ -288,7 +381,7 @@ const suggestionsByLang = {
   en: [
     { text: "Explain quantum computing in simple terms", icon: "science" },
     { text: "Create a majestic dragon soaring over misty mountains", icon: "image" },
-    { text: "How do I make an HTTP request in JavaScript?", icon: "code" },
+    { text: "HHTTP request in JavaScript?", icon: "code" },
     { text: "Write a poem about the beauty of nature", icon: "nature" },
   ],
   ckb: [
@@ -308,13 +401,39 @@ const suggestionsByLang = {
 const bindSuggestionHandlers = () => {
   if (!suggestionsContainer) return;
   suggestionsContainer.querySelectorAll('.suggestions-item').forEach((suggestion) => {
-    suggestion.addEventListener("click", () => {
-      const text = suggestion.querySelector(".text")?.textContent || "";
+    // Remove existing listeners to prevent duplicates
+    const newSuggestion = suggestion.cloneNode(true);
+    suggestion.parentNode.replaceChild(newSuggestion, suggestion);
+    
+    const handleSuggestionSelect = () => {
+      const text = newSuggestion.querySelector(".text")?.textContent || "";
+      if (text) {
       promptInput.value = text;
       promptForm.dispatchEvent(new Event("submit"));
+        promptInput.focus();
+      }
+    };
+    
+    // Click handler
+    newSuggestion.addEventListener("click", handleSuggestionSelect);
+    
+    // Keyboard navigation support
+    newSuggestion.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        handleSuggestionSelect();
+      }
     });
-    suggestion.addEventListener("mouseenter", () => { suggestion.style.transform = "translateY(-10px)"; });
-    suggestion.addEventListener("mouseleave", () => { suggestion.style.transform = "translateY(0)"; });
+    
+    // Hover effects (for non-touch devices)
+    if (window.matchMedia('(hover: hover)').matches) {
+      newSuggestion.addEventListener("mouseenter", () => { 
+        newSuggestion.style.transform = "translateY(-10px)"; 
+      });
+      newSuggestion.addEventListener("mouseleave", () => { 
+        newSuggestion.style.transform = "translateY(0)"; 
+      });
+    }
   });
 };
 
@@ -354,7 +473,7 @@ const isLightTheme = localStorage.getItem("themeColor") === "light_mode";
 document.body.classList.toggle("light-theme", isLightTheme);
 themeToggleBtn.textContent = isLightTheme ? "dark_mode" : "light_mode";
 
-// Function to detect language of a text
+// Enhanced language detection with better accuracy
 const detectLanguage = (text) => {
   // Remove extra whitespace and get a clean text sample
   const cleanText = text.trim().toLowerCase();
@@ -364,38 +483,61 @@ const detectLanguage = (text) => {
   
   // Define regex patterns for different scripts and languages
   const arabicRegex = /[\u0600-\u06FF]/g;
-  const kurdishSoraniSpecific = /[\u0698\u06A9\u06AF\u067E\u0686]/g; // Specific Kurdish characters
+  const kurdishSoraniSpecific = /[\u0698\u06A9\u06AF\u067E\u0686\u0695\u0688\u0689]/g; // Extended Kurdish characters
   const englishRegex = /[a-zA-Z]/g;
+  const latinExtendedRegex = /[a-zA-Z\u00C0-\u017F]/g; // Extended Latin for European languages
   
-  // Common words for language detection
-  const englishCommonWords = ['the', 'and', 'or', 'but', 'is', 'are', 'was', 'were', 'be', 'been', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might', 'can', 'must'];
-  const arabicCommonWords = ['الذي', 'التي', 'أن', 'إن', 'من', 'على', 'في', 'إلى', 'عن', 'على', 'مع', 'بعد', 'قبل', 'أثناء', 'منذ', 'لأن', 'حتى', 'كل', 'جميع', 'بعض', 'أي', 'ما', 'كيف', 'متى', 'أين', 'почему', 'как', 'что', 'кто'];
+  // Enhanced common words for language detection
+  const englishCommonWords = ['the', 'and', 'or', 'but', 'is', 'are', 'was', 'were', 'be', 'been', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might', 'can', 'must', 'this', 'that', 'these', 'those'];
+  const arabicCommonWords = ['الذي', 'التي', 'أن', 'إن', 'من', 'على', 'في', 'إلى', 'عن', 'مع', 'بعد', 'قبل', 'أثناء', 'منذ', 'لأن', 'حتى', 'كل', 'جميع', 'بعض', 'أي', 'ما', 'كيف', 'متى', 'أين', 'لماذا'];
+  const kurdishCommonWords = ['ئەم', 'ئەو', 'لە', 'بە', 'دە', 'نا', 'بێت', 'هەیە', 'ئەکات', 'دەکات', 'کرد', 'بوو', 'دەبێت'];
   
-  // Check for Kurdish (Sorani) first as it uses Arabic script with specific characters
+  // Scoring system for better accuracy
+  let scores = {
+    kurdish: 0,
+    arabic: 0,
+    english: 0
+  };
+  
+  // Check for Kurdish (Sorani) first - most specific
   const kurdishChars = cleanText.match(kurdishSoraniSpecific);
-  if (kurdishChars && kurdishChars.length > 0) {
-    return 'Kurdish (Sorani)';
+  if (kurdishChars) {
+    scores.kurdish += kurdishChars.length * 2; // Weight Kurdish-specific chars more
   }
+  const kurdishWords = kurdishCommonWords.filter(word => cleanText.includes(word));
+  scores.kurdish += kurdishWords.length * 3;
   
   // Check for Arabic script
   const arabicChars = cleanText.match(arabicRegex);
-  if (arabicChars && arabicChars.length > 3) { // At least 3 Arabic characters to be considered Arabic
-    // Check for common Arabic words
-    const arabicWords = arabicCommonWords.some(word => cleanText.includes(word));
-    if (arabicWords) {
+  if (arabicChars && arabicChars.length > 2) {
+    scores.arabic += arabicChars.length;
+    const arabicWords = arabicCommonWords.filter(word => cleanText.includes(word));
+    scores.arabic += arabicWords.length * 2;
+    
+    // If Kurdish chars found but Arabic score is high, it might be Arabic
+    if (!kurdishChars || scores.arabic > scores.kurdish * 1.5) {
       return 'Arabic';
     }
-    return 'Arabic';
   }
   
   // Check for English/Latin script
   const englishChars = cleanText.match(englishRegex);
-  if (englishChars && englishChars.length > 3) { // At least 3 English characters
-    // Check for common English words
-    const englishWords = englishCommonWords.some(word => cleanText.includes(word));
-    if (englishWords) {
-      return 'English';
-    }
+  if (englishChars && englishChars.length > 2) {
+    scores.english += englishChars.length;
+    const englishWords = englishCommonWords.filter(word => cleanText.includes(word));
+    scores.english += englishWords.length * 2;
+  }
+  
+  // Return language with highest score
+  if (scores.kurdish > 0 && scores.kurdish >= scores.arabic && scores.kurdish >= scores.english) {
+    return 'Kurdish (Sorani)';
+  }
+  
+  if (scores.arabic > scores.english && scores.arabic > 2) {
+    return 'Arabic';
+  }
+  
+  if (scores.english > 2) {
     return 'English';
   }
   
@@ -585,12 +727,12 @@ const isKurdishText = (text) => {
 // Function to create error message elements with better styling
 const createErrorMessageElement = (errorMessage, ...classes) => {
   const errorContent = `
-    <div class="avatar">
-      <img src="https://i.ibb.co/21jpMNhw/234421810-326887782452132-7028869078528396806-n-removebg-preview-1.png" alt="Bot Avatar" class="avatar-image">
+    <div class="avatar" aria-hidden="true">
+      <img src="${AVATAR_IMAGE_URL}" alt="Bot Avatar" class="avatar-image">
     </div>
     <div class="message-content">
-      <div class="message-header">
-        <span class="language-indicator error-indicator">Error</span>
+      <div class="message-header" role="alert" aria-live="assertive">
+        <span class="language-indicator error-indicator" aria-label="Error message">Error</span>
       </div>
       <p class="message-text error-message">${escapeHTML(errorMessage)}</p>
     </div>
@@ -598,8 +740,26 @@ const createErrorMessageElement = (errorMessage, ...classes) => {
   return createMessageElement(errorContent, "bot-message", "error", ...classes);
 };
 
-// Scroll to the bottom of the container
-const scrollToBottom = () => container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
+// Performance: Optimize scroll handling
+let scrollTimeout;
+const optimizedScrollToBottom = () => {
+  if (scrollTimeout) {
+    cancelAnimationFrame(scrollTimeout);
+  }
+  scrollTimeout = requestAnimationFrame(() => {
+    if (container) {
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: "smooth"
+      });
+    }
+  });
+};
+
+// Scroll to the bottom of the container (optimized wrapper)
+const scrollToBottom = () => {
+  optimizedScrollToBottom();
+};
 
 // Render a simple recent chat summary as a bot message
 const renderRecentChats = () => {
@@ -616,7 +776,7 @@ const renderRecentChats = () => {
   }).join("");
   const html = `
     <div class="avatar">
-      <img src="https://i.ibb.co/21jpMNhw/234421810-326887782452132-7028869078528396806-n-removebg-preview-1.png" alt="Bot Avatar" class="avatar-image">
+      <img src="${AVATAR_IMAGE_URL}" alt="Bot Avatar" class="avatar-image">
     </div>
     <div class="message-content">
       <p class="message-text"><strong>Recent chat (last ${recent.length}):</strong>\n<ul>${listItems || '<li>No recent messages.</li>'}</ul></p>
@@ -624,44 +784,89 @@ const renderRecentChats = () => {
   `;
   const botMsgDiv = createMessageElement(html, "bot-message");
   chatsContainer.appendChild(botMsgDiv);
-  scrollToBottom();
+  optimizedScrollToBottom();
 };
 
-// Simulate typing effect for bot responses
+// Enhanced typing effect with better formatting support and cleanup
 const typingEffect = (text, textElement, botMsgDiv) => {
+  // Clear any existing typing interval
+  if (typingInterval) {
+    clearInterval(typingInterval);
+    typingInterval = null;
+  }
+  
   // Check if the text is Kurdish and add the appropriate class
   if (isKurdishText(text)) {
     textElement.classList.add('kurdish-text');
   }
   
+  // Clear existing content
   textElement.textContent = "";
-  const words = text.split(" ");
+  botMsgDiv.classList.add("loading");
+  
+  // Enhanced parsing for better formatting
+  const words = text.split(/(\s+)/);
   let wordIndex = 0;
-  // Set an interval to type each word
+  let lastUpdateTime = Date.now();
+  
+  // Adaptive typing speed based on content length
+  const getDelay = () => {
+    const progress = wordIndex / words.length;
+    return progress > 0.8 ? CONFIG.LIMITS.TYPING_MAX_DELAY : CONFIG.LIMITS.TYPING_DELAY;
+  };
+  
+  // Optimized scroll function using requestAnimationFrame
+  const throttledScroll = throttle(scrollToBottom, 100);
+  
+  // Set an interval to type each word with adaptive speed
   typingInterval = setInterval(() => {
+    const now = Date.now();
+    const timeSinceLastUpdate = now - lastUpdateTime;
+    
+    if (timeSinceLastUpdate >= getDelay()) {
     if (wordIndex < words.length) {
-      textElement.textContent += (wordIndex === 0 ? "" : " ") + words[wordIndex++];
-      scrollToBottom();
+        textElement.textContent += words[wordIndex++];
+        
+        // Scroll periodically for better performance
+        if (wordIndex % CONFIG.ANIMATIONS.SCROLL_UPDATE_INTERVAL === 0) {
+          throttledScroll();
+        }
+        lastUpdateTime = now;
     } else {
       clearInterval(typingInterval);
+        typingInterval = null;
       botMsgDiv.classList.remove("loading");
       document.body.classList.remove("bot-responding");
+        
+        // Apply formatting after typing completes
+        const originalText = botMsgDiv.dataset.originalText || textElement.textContent;
+        if (originalText) {
+          const formattedText = formatMessageText(originalText);
+          if (formattedText && formattedText !== `<p>${originalText}</p>`) {
+            textElement.innerHTML = formattedText;
+          }
+        }
+        
+        optimizedScrollToBottom(); // Final scroll
+      }
     }
-  }, 30); // 30 ms delay for smoother typing
+  }, 10);
 };
 
 // Create typing indicator
 const createTypingIndicator = () => {
   const typingDiv = document.createElement("div");
-  typingDiv.classList.add("message", "bot-message", "typing-indicator");
+  typingDiv.classList.add("message", "bot-message");
   typingDiv.innerHTML = `
-    <div class="avatar">
-      <img src="https://i.ibb.co/21jpMNhw/234421810-326887782452132-7028869078528396806-n-removebg-preview-1.png" alt="Bot Avatar" class="avatar-image">
+    <div class="avatar" aria-hidden="true">
+      <img src="${AVATAR_IMAGE_URL}" alt="Bot Avatar" class="avatar-image">
     </div>
-    <div class="typing-indicator">
+    <div class="message-content">
+      <div class="typing-indicator" role="status" aria-live="polite" aria-label="Bot is typing">
       <span></span>
       <span></span>
       <span></span>
+      </div>
     </div>
   `;
   return typingDiv;
@@ -671,26 +876,26 @@ const createTypingIndicator = () => {
 const validateAndSanitizeInput = (text) => {
   if (!text) return "";
   
-  // Convert to string and trim
-  let sanitized = String(text).trim();
-  
-  // Remove excessive whitespace
-  sanitized = sanitized.replace(/\s+/g, " ");
-  
+    // Convert to string and trim
+    let sanitized = String(text).trim();
+    
+    // Remove excessive whitespace
+    sanitized = sanitized.replace(/\s+/g, " ");
+    
   // Remove control characters
   sanitized = sanitized.replace(/[\u0000-\u001F\u007F]/g, " ");
   
   // Limit length to prevent abuse
-  sanitized = sanitized.slice(0, 1000);
-  
-  // Additional security checks
-  // Remove potentially dangerous patterns
-  sanitized = sanitized.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
-  sanitized = sanitized.replace(/javascript:/gi, "");
-  sanitized = sanitized.replace(/vbscript:/gi, "");
+  sanitized = sanitized.slice(0, CONFIG.LIMITS.MAX_PROMPT_LENGTH);
+    
+    // Additional security checks
+    // Remove potentially dangerous patterns
+    sanitized = sanitized.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
+    sanitized = sanitized.replace(/javascript:/gi, "");
+    sanitized = sanitized.replace(/vbscript:/gi, "");
   sanitized = sanitized.replace(/data:/gi, "");
-  
-  return sanitized;
+    
+    return sanitized;
 };
 
 // Sanitize and normalize prompts for image models
@@ -700,16 +905,47 @@ const sanitizePrompt = (text) => {
     .replace(/\s+/g, " ")
     .replace(/[\u0000-\u001F\u007F]/g, " ")
     .trim()
-    .slice(0, 800); // keep under typical provider limits
+    .slice(0, CONFIG.LIMITS.MAX_IMAGE_PROMPT_LENGTH);
 };
 
-// Promise timeout helper
+// ==========================================
+// UTILITY FUNCTIONS
+// ==========================================
+
+// Enhanced promise timeout helper
 const withTimeout = (promise, ms, onTimeoutMessage = "Operation timed out") => {
   let timer;
   const timeout = new Promise((_, reject) => {
     timer = setTimeout(() => reject(new Error(onTimeoutMessage)), ms);
   });
-  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+  return Promise.race([promise, timeout]).finally(() => {
+    if (timer) clearTimeout(timer);
+  });
+};
+
+// Debounce function for performance optimization
+const debounce = (func, wait) => {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+};
+
+// Throttle function for performance optimization
+const throttle = (func, limit) => {
+  let inThrottle;
+  return function executedFunction(...args) {
+    if (!inThrottle) {
+      func.apply(this, args);
+      inThrottle = true;
+      setTimeout(() => inThrottle = false, limit);
+    }
+  };
 };
 
 // Helper to construct a Pollinations image URL
@@ -720,20 +956,26 @@ const buildPollinationsImageUrl = (prompt) => {
     nologo: "true",
     enhance: "true"
   });
-  return `${POLLINATIONS_BASE_URL}${encodeURIComponent(sanitizePrompt(prompt))}?${params.toString()}`;
+  return `${CONFIG.API.POLLINATIONS_BASE_URL}${encodeURIComponent(sanitizePrompt(prompt))}?${params.toString()}`;
 };
 
-// Helper to load an image and await success/failure
-const waitForImageLoad = (img, timeoutMs = 25000) => withTimeout(new Promise((resolve, reject) => {
+// Helper to load an image and await success/failure with cleanup
+const waitForImageLoad = (img, timeoutMs = CONFIG.TIMEOUTS.IMAGE_LOAD) => {
+  return withTimeout(
+    new Promise((resolve, reject) => {
   const onLoad = () => { cleanup(); resolve(); };
   const onError = (e) => { cleanup(); reject(e); };
   const cleanup = () => {
     img.removeEventListener("load", onLoad);
     img.removeEventListener("error", onError);
   };
-  img.addEventListener("load", onLoad);
-  img.addEventListener("error", onError);
-}), timeoutMs, "Image load timed out");
+      img.addEventListener("load", onLoad, { once: true });
+      img.addEventListener("error", onError, { once: true });
+    }),
+    timeoutMs,
+    "Image load timed out"
+  );
+};
 
 // Function to generate image using Pollinations (no API key, direct image URL)
 const generateImageWithPollinations = async (prompt) => {
@@ -748,9 +990,10 @@ const generateImageWithPollinations = async (prompt) => {
 
 // Function to generate image using Hugging Face Inference API (returns blob URL)
 const generateImageWithHF = async (prompt, options = {}) => {
-  const modelId = options.modelId || HF_DEFAULT_MODEL;
+  const modelId = options.modelId || CONFIG.API.HF_DEFAULT_MODEL;
   const HF_API_KEY = getHfApiKey();
   if (!HF_API_KEY) throw new Error("Hugging Face API key not configured");
+  
   const payload = {
     inputs: sanitizePrompt(prompt),
     parameters: {
@@ -759,9 +1002,11 @@ const generateImageWithHF = async (prompt, options = {}) => {
       ...(options.parameters || {})
     }
   };
-  const url = `https://api-inference.huggingface.co/models/${encodeURIComponent(modelId)}`;
+  
+  const url = `${CONFIG.API.HF_BASE_URL}/${encodeURIComponent(modelId)}`;
   const maxAttempts = 3;
   let lastErr;
+  
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
       const req = fetch(url, {
@@ -773,21 +1018,25 @@ const generateImageWithHF = async (prompt, options = {}) => {
         },
         body: JSON.stringify(payload),
       });
-      const res = await withTimeout(req, 60000, "Hugging Face request timed out");
+      
+      const res = await withTimeout(req, CONFIG.TIMEOUTS.HF_REQUEST, "Hugging Face request timed out");
+      
       if (res.status === 503) {
-        // Model loading/warmup
         const body = await res.json().catch(() => ({}));
         const wait = Math.min(4000 * attempt, 10000);
         await new Promise(r => setTimeout(r, wait));
         continue;
       }
+      
       if (!res.ok) {
         const bodyText = await res.text().catch(() => "");
         throw new Error(`HF error ${res.status}: ${res.statusText}${bodyText ? ` - ${bodyText}` : ''}`);
       }
+      
       const blob = await res.blob();
       const objectUrl = URL.createObjectURL(blob);
-      // quick verify load
+      
+      // Verify load
       const testImg = new Image();
       testImg.src = objectUrl;
       await waitForImageLoad(testImg, 20000);
@@ -806,20 +1055,22 @@ const generateImageWithDeepAI = async (prompt) => {
   const backoffBaseMs = 1200;
   const sanitized = sanitizePrompt(prompt);
   let lastError;
+  
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
       const formData = new FormData();
       formData.append('text', sanitized);
 
       const abortController = new AbortController();
-      const req = fetch(DEEP_AI_API_URL, {
+      const req = fetch(CONFIG.API.DEEP_AI_URL, {
         method: "POST",
-        headers: { "api-key": DEEP_AI_API_KEY },
+        headers: { "api-key": getDeepAiApiKey() },
         body: formData,
         signal: abortController.signal
       });
 
-      const response = await withTimeout(req, 30000, "DeepAI request timed out");
+      const response = await withTimeout(req, CONFIG.TIMEOUTS.DEEP_AI, "DeepAI request timed out");
+      
       if (!response.ok) {
         const maybeJson = await response.clone().text().catch(() => "");
         throw new Error(`DeepAI API error ${response.status}: ${response.statusText}${maybeJson ? ` - ${maybeJson}` : ''}`);
@@ -836,14 +1087,15 @@ const generateImageWithDeepAI = async (prompt) => {
       }
     }
   }
+  
   console.error("DeepAI API error:", lastError);
   throw lastError;
 };
 
 // Function to generate image using Gemini API
 const generateImageWithGemini = async (prompt) => {
-  try {
-    // Try with gemini-pro-vision model first
+    try {
+      // Try with gemini-pro-vision model first
     const response = await fetch(GEMINI_IMAGE_API_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -867,19 +1119,34 @@ const generateImageWithGemini = async (prompt) => {
     return responsePart;
   } catch (error) {
     console.error("Gemini API error:", error);
-    // If gemini-pro-vision fails, try with gemini-2.0-flash-exp
-    try {
-      const GEMINI_FLASH_IMAGE_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GEMINI_API_KEY}`;
-      const response = await fetch(GEMINI_FLASH_IMAGE_API_URL, {
+      // If gemini-pro-vision fails, try with gemini-2.0-flash-exp
+      try {
+      const GEMINI_FLASH_IMAGE_API_URL = buildGeminiApiUrl('gemini-2.0-flash-exp');
+        const response = await fetch(GEMINI_FLASH_IMAGE_API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           contents: [{
             role: "user",
             parts: [{
-              text: `Please provide a detailed description for generating an image based on: ${prompt}. Include specific visual details, colors, style, and composition.`
+              text: `You are an expert at creating detailed image generation prompts. Based on this request: "${prompt}", create a comprehensive, detailed description optimized for AI image generation. 
+
+Include:
+- Specific visual details (objects, people, scenery)
+- Color palette and lighting
+- Art style (realistic, cartoon, abstract, etc.)
+- Composition and framing
+- Mood and atmosphere
+- Technical details (resolution, quality)
+
+Provide a single, well-structured prompt that would produce the best image.`
             }]
-          }]
+          }],
+          systemInstruction: {
+            parts: [{
+              text: "You specialize in creating detailed, optimized prompts for AI image generation. Always provide comprehensive, specific descriptions."
+            }]
+          }
         }),
       });
       
@@ -932,39 +1199,104 @@ const generateResponse = async (botMsgDiv) => {
       // Handle image generation request
       textElement.textContent = "Preparing your image generation request...";
       
+      // Create progress indicator
+      const progressIndicator = document.createElement('div');
+      progressIndicator.className = 'image-generation-progress';
+      progressIndicator.innerHTML = `
+        <div class="progress-bar">
+          <div class="progress-fill" style="width: 0%"></div>
+        </div>
+        <p class="progress-text">Initializing...</p>
+      `;
+      textElement.innerHTML = '';
+      textElement.appendChild(progressIndicator);
+      
+      const progressFill = progressIndicator.querySelector('.progress-fill');
+      const progressText = progressIndicator.querySelector('.progress-text');
+      
+      const updateProgress = (percent, text) => {
+        if (progressFill) progressFill.style.width = `${percent}%`;
+        if (progressText) progressText.textContent = text;
+      };
+      
       try {
         // Try Pollinations first for fast, keyless generation
-        textElement.textContent = "Generating image...";
-        let imageUrl = await generateImageWithPollinations(userData.message);
+        updateProgress(20, 'Connecting to image service...');
+        await new Promise(resolve => setTimeout(resolve, 300));
         
-        // Display the generated image
+        updateProgress(40, 'Generating image...');
+        let imageUrl = await generateImageWithPollinations(userData.message);
+        updateProgress(80, 'Processing image...');
+        
+        // Display the generated image with optimized loading
         const imgElement = document.createElement("img");
-        imgElement.src = imageUrl;
         imgElement.className = "generated-image";
         imgElement.alt = "Generated image";
+        imgElement.loading = "lazy";
+        imgElement.decoding = "async";
+        imgElement.fetchpriority = "low";
+        
+        // Create placeholder for smooth loading
+        const placeholder = document.createElement("div");
+        placeholder.className = "image-placeholder";
+        placeholder.innerHTML = `
+          <div class="placeholder-spinner"></div>
+          <p>Loading image...</p>
+        `;
+        textElement.innerHTML = "";
+        textElement.appendChild(placeholder);
+        
+        // Load image with error handling
+        imgElement.src = imageUrl;
+        
+        updateProgress(90, 'Loading image...');
         
         imgElement.onload = () => {
-          // Image loaded successfully
-          textElement.innerHTML = "";
-          textElement.appendChild(imgElement);
+          // Image loaded successfully - fade in effect
+          updateProgress(100, 'Complete!');
           
-          // Add download button
-          const downloadBtn = document.createElement("button");
-          downloadBtn.className = "download-btn neon-glow";
-          downloadBtn.innerHTML = '<span class="material-symbols-rounded">download</span> Download Image';
-          downloadBtn.onclick = () => {
-            const link = document.createElement("a");
-            link.href = imageUrl;
-            link.download = `generated-image-${Date.now()}.png`;
-            link.target = "_blank";
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-          };
-          textElement.appendChild(downloadBtn);
+          setTimeout(() => {
+            placeholder.style.opacity = "0";
+            placeholder.style.transition = "opacity 0.3s ease-out";
+            
+            setTimeout(() => {
+              textElement.innerHTML = "";
+              imgElement.style.opacity = "0";
+              textElement.appendChild(imgElement);
+              
+              // Fade in image
+              requestAnimationFrame(() => {
+                imgElement.style.transition = "opacity 0.5s ease-in";
+                imgElement.style.opacity = "1";
+              });
+              
+              // Add download button
+              const downloadBtn = document.createElement("button");
+              downloadBtn.className = "download-btn";
+              downloadBtn.innerHTML = '<span class="material-symbols-rounded" aria-hidden="true">download</span> Download Image';
+              downloadBtn.setAttribute("aria-label", "Download generated image");
+              downloadBtn.onclick = () => {
+                const link = document.createElement("a");
+                link.href = imageUrl;
+                link.download = `generated-image-${Date.now()}.png`;
+                link.target = "_blank";
+                link.rel = "noopener noreferrer";
+                document.body.appendChild(link);
+                link.click();
+                setTimeout(() => document.body.removeChild(link), 100);
+              };
+              textElement.appendChild(downloadBtn);
+              
+              // Track successful generation
+              chatHistory.push({ type: 'bot-image', url: imageUrl, ts: Date.now() });
+              saveChatHistory();
+              optimizedScrollToBottom();
+            }, 300);
+          }, 500);
         };
         
         imgElement.onerror = () => {
+          updateProgress(50, 'Primary method failed, trying alternative...');
           // If Pollinations preview fails, try DeepAI or HF as fallbacks
           (async () => {
             try {
@@ -1049,25 +1381,53 @@ const generateResponse = async (botMsgDiv) => {
               const finalUrl = await generateImageWithDeepAI(responseText);
 
               const finalImg = document.createElement("img");
-              finalImg.src = finalUrl;
               finalImg.className = "generated-image";
               finalImg.alt = "Generated image";
+              finalImg.loading = "lazy";
+              finalImg.decoding = "async";
+              
+              // Create placeholder
+              const placeholder = document.createElement("div");
+              placeholder.className = "image-placeholder";
+              placeholder.innerHTML = `
+                <div class="placeholder-spinner"></div>
+                <p>Loading image...</p>
+              `;
+              textElement.innerHTML = "";
+              textElement.appendChild(placeholder);
+              
+              finalImg.src = finalUrl;
               finalImg.onload = () => {
+                placeholder.style.opacity = "0";
+                placeholder.style.transition = "opacity 0.3s ease-out";
+                
+                setTimeout(() => {
                 textElement.innerHTML = "";
+                  finalImg.style.opacity = "0";
                 textElement.appendChild(finalImg);
+                  
+                  requestAnimationFrame(() => {
+                    finalImg.style.transition = "opacity 0.5s ease-in";
+                    finalImg.style.opacity = "1";
+                  });
+                  
                 const downloadBtn = document.createElement("button");
-                downloadBtn.className = "download-btn neon-glow";
-                downloadBtn.innerHTML = '<span class="material-symbols-rounded">download</span> Download Image';
+                  downloadBtn.className = "download-btn";
+                  downloadBtn.innerHTML = '<span class="material-symbols-rounded" aria-hidden="true">download</span> Download Image';
+                  downloadBtn.setAttribute("aria-label", "Download generated image");
                 downloadBtn.onclick = () => {
                   const link = document.createElement("a");
                   link.href = finalUrl;
                   link.download = `generated-image-${Date.now()}.png`;
                   link.target = "_blank";
+                    link.rel = "noopener noreferrer";
                   document.body.appendChild(link);
                   link.click();
-                  document.body.removeChild(link);
+                    setTimeout(() => document.body.removeChild(link), 100);
                 };
                 textElement.appendChild(downloadBtn);
+                  optimizedScrollToBottom();
+                }, 300);
               };
               waitForImageLoad(finalImg).then(() => {
                 chatHistory.push({ type: 'bot-image', url: finalUrl, ts: Date.now() });
@@ -1107,45 +1467,152 @@ const generateResponse = async (botMsgDiv) => {
         }
       }
     } else {
-      // Handle regular text response using Gemini
-      const response = await fetch(GEMINI_API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          contents: [{
+      // Handle regular text response using Gemini with enhanced prompts and context
+      const systemInstruction = getSystemPrompt(userData.message);
+      const conversationContext = buildConversationContext(chatHistory, 3); // Last 3 conversation pairs
+      
+      // Build the request payload with system instruction and conversation context
+      const requestBody = {
+        contents: [
+          // Include conversation history if available
+          ...conversationContext,
+          // Current user message
+          {
             role: "user",
             parts: [{
               text: userData.message
             }]
+          }
+        ],
+        systemInstruction: {
+          parts: [{
+            text: systemInstruction
           }]
-        }),
-        signal: controller.signal,
+        },
+        generationConfig: {
+          temperature: 0.7,
+          topK: 40,
+          topP: 0.95,
+          maxOutputTokens: 2048,
+          responseMimeType: "text/plain"
+        }
+      };
+
+      // Wrap fetch in retry logic
+      const fetchWithRetry = async () => {
+        const response = await fetch(GEMINI_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(requestBody),
+          signal: controller.signal,
+        });
+        
+        if (!response.ok) {
+          const error = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
+          throw new Error(error.error?.message || error.error || `HTTP ${response.status}`);
+        }
+        
+        return response;
+      };
+      
+      const response = await fetchWithRetry().catch(async (error) => {
+        // Try auto-retry for network errors
+        if (isRetryableError(error) && !controller.signal.aborted) {
+          showToast('Network issue detected. Retrying...', 'warning', 2000);
+          const retriedResponse = await autoRetry(fetchWithRetry, error);
+          if (retriedResponse) return retriedResponse;
+        }
+        throw error;
       });
       
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error.message);
+      if (!response.ok) {
+        // Enhanced error handling
+        const errorMsg = data.error?.message || data.error || `API Error: ${response.status}`;
+        throw new Error(errorMsg);
+      }
       
-      // Process the response
-      const responsePart = data.candidates[0].content.parts[0];
-      const responseText = responsePart.text.replace(/\*\*([^*]+)\*\*/g, "$1").trim();
+      // Process the response with better formatting
+      const responsePart = data.candidates[0]?.content?.parts[0];
+      if (!responsePart || !responsePart.text) {
+        throw new Error("No response generated from AI");
+      }
+      
+      // Enhanced text processing: preserve formatting while cleaning markdown
+      let responseText = responsePart.text
+        .replace(/\*\*([^*]+)\*\*/g, "$1") // Remove bold markdown
+        .replace(/\*([^*]+)\*/g, "$1") // Remove italic markdown
+        .replace(/```[\s\S]*?```/g, (match) => match) // Preserve code blocks
+        .trim();
+      
+      // Ensure proper line breaks for readability
+      responseText = responseText.replace(/\n{3,}/g, '\n\n'); // Max 2 line breaks
+      
+      // Use typing effect for better UX, but add formatting support
       typingEffect(responseText, textElement, botMsgDiv);
+      
+      // Store original text for TTS (before formatting)
+      botMsgDiv.dataset.originalText = responseText;
+      
       chatHistory.push({ type: 'bot', text: responseText, ts: Date.now() });
+      saveChatHistory(); // Auto-save after each response
+      
+      // Add TTS and copy controls after message is complete
+      setTimeout(() => {
+        addTTSControls(botMsgDiv, responseText);
+        addCopyButton(botMsgDiv);
+        
+        // Apply formatting after typing completes
+        if (textElement.textContent === responseText) {
+          const formattedText = formatMessageText(responseText);
+          if (formattedText && formattedText !== `<p>${responseText}</p>`) {
+            textElement.innerHTML = formattedText;
+          }
+        }
+      }, 100);
     }
   } catch (error) {
     console.error("API Error:", error);
-    const errorMessage = error.name === "AbortError" 
-      ? "Response generation stopped by user." 
-      : `Sorry, I encountered an error: ${error.message}. Please try again.`;
+    
+    // Enhanced error handling with more helpful messages
+    let errorMessage;
+    if (error.name === "AbortError") {
+      errorMessage = "Response generation stopped by user.";
+    } else if (error.message.includes("API key")) {
+      errorMessage = "API authentication error. Please check your API key in Security Settings.";
+    } else if (error.message.includes("timeout") || error.message.includes("timed out")) {
+      errorMessage = "The request took too long. Please try again with a simpler query.";
+    } else if (error.message.includes("rate limit") || error.message.includes("quota")) {
+      errorMessage = "API rate limit exceeded. Please wait a moment and try again.";
+    } else if (error.message.includes("network") || error.message.includes("fetch")) {
+      errorMessage = "Network error. Please check your internet connection and try again.";
+    } else {
+      errorMessage = `Sorry, I encountered an error: ${error.message}. Please try rephrasing your question or try again later.`;
+    }
     
     textElement.textContent = errorMessage;
     textElement.style.color = "var(--error-color)";
     textElement.classList.add("error-message");
     botMsgDiv.classList.remove("loading");
     document.body.classList.remove("bot-responding");
-    scrollToBottom();
+    optimizedScrollToBottom();
     
     // Add error to chat history
     chatHistory.push({ type: 'error', text: errorMessage, ts: Date.now() });
+    
+    // Add retry button
+    addRetryButton(botMsgDiv, userData.message || promptInput.value);
+    saveChatHistory();
+    
+    // Show network status if it's a network error
+    if (error.message.includes("network") || error.message.includes("fetch")) {
+      if (networkStatus) {
+        networkStatus.classList.add("show");
+        setTimeout(() => {
+          networkStatus.classList.remove("show");
+        }, 5000);
+      }
+    }
   } finally {
     userData.file = {};
   }
@@ -1163,12 +1630,11 @@ const handleFormSubmit = (e) => {
   
   // Check rate limiting
   try {
-    checkRateLimit();
+    rateLimiter.check();
   } catch (error) {
-    // Create error message
     const errorMsgDiv = createErrorMessageElement(error.message);
     chatsContainer.appendChild(errorMsgDiv);
-    scrollToBottom();
+    optimizedScrollToBottom();
     return;
   }
 
@@ -1177,16 +1643,7 @@ const handleFormSubmit = (e) => {
     const key = userMessage.slice(8).trim();
     const ok = setHfApiKey(key);
     promptInput.value = "";
-    const systemMsg = createMessageElement(`
-      <div class="avatar">
-        <img src="https://i.ibb.co/21jpMNhw/234421810-326887782452132-7028869078528396806-n-removebg-preview-1.png" alt="Bot Avatar" class="avatar-image">
-      </div>
-      <div class="message-content">
-        <p class="message-text">${ok ? 'HF key saved locally.' : 'Invalid key.'}</p>
-      </div>
-    `, "bot-message");
-    chatsContainer.appendChild(systemMsg);
-    scrollToBottom();
+    showToast(ok ? 'HF key saved locally.' : 'Invalid key.', ok ? 'success' : 'error');
     return;
   }
   
@@ -1202,7 +1659,7 @@ const handleFormSubmit = (e) => {
     
     const response = `
       <div class="avatar">
-        <img src="https://i.ibb.co/21jpMNhw/234421810-326887782452132-7028869078528396806-n-removebg-preview-1.png" alt="Bot Avatar" class="avatar-image">
+        <img src="${AVATAR_IMAGE_URL}" alt="Bot Avatar" class="avatar-image">
       </div>
       <div class="message-content">
         <p class="message-text"><strong>Vehicle Maintenance Schedule (${vehicleType.toUpperCase()}):</strong></p>
@@ -1214,7 +1671,7 @@ const handleFormSubmit = (e) => {
     promptInput.value = "";
     const botMsgDiv = createMessageElement(response, "bot-message");
     chatsContainer.appendChild(botMsgDiv);
-    scrollToBottom();
+    optimizedScrollToBottom();
     addTTSControls(botMsgDiv, response.replace(/<[^>]*>/g, ''));
     return;
   }
@@ -1223,7 +1680,7 @@ const handleFormSubmit = (e) => {
   if (userMessage.toLowerCase().includes('compare') && isVehicleQuery(userMessage)) {
     const response = `
       <div class="avatar">
-        <img src="https://i.ibb.co/21jpMNhw/234421810-326887782452132-7028869078528396806-n-removebg-preview-1.png" alt="Bot Avatar" class="avatar-image">
+        <img src="${AVATAR_IMAGE_URL}" alt="Bot Avatar" class="avatar-image">
       </div>
       <div class="message-content">
         <p class="message-text"><strong>Vehicle Comparison:</strong></p>
@@ -1281,7 +1738,7 @@ const handleFormSubmit = (e) => {
     promptInput.value = "";
     const botMsgDiv = createMessageElement(response, "bot-message");
     chatsContainer.appendChild(botMsgDiv);
-    scrollToBottom();
+    optimizedScrollToBottom();
     addTTSControls(botMsgDiv, response.replace(/<[^>]*>/g, ''));
     return;
   }
@@ -1300,7 +1757,7 @@ const handleFormSubmit = (e) => {
       if (cost) {
         const response = `
           <div class="avatar">
-            <img src="https://i.ibb.co/21jpMNhw/234421810-326887782452132-7028869078528396806-n-removebg-preview-1.png" alt="Bot Avatar" class="avatar-image">
+            <img src="${AVATAR_IMAGE_URL}" alt="Bot Avatar" class="avatar-image">
           </div>
           <div class="message-content">
             <p class="message-text">Based on your inputs:
@@ -1317,7 +1774,7 @@ const handleFormSubmit = (e) => {
         promptInput.value = "";
         const botMsgDiv = createMessageElement(response, "bot-message");
         chatsContainer.appendChild(botMsgDiv);
-        scrollToBottom();
+        optimizedScrollToBottom();
         addTTSControls(botMsgDiv, response.replace(/<[^>]*>/g, ''));
         return;
       }
@@ -1336,7 +1793,7 @@ const handleFormSubmit = (e) => {
       
       const response = `
         <div class="avatar">
-          <img src="https://i.ibb.co/21jpMNhw/234421810-326887782452132-7028869078528396806-n-removebg-preview-1.png" alt="Bot Avatar" class="avatar-image">
+          <img src="${AVATAR_IMAGE_URL}" alt="Bot Avatar" class="avatar-image">
         </div>
         <div class="message-content">
           <p class="message-text"><strong>Environmental Impact Comparison:</strong></p>
@@ -1353,7 +1810,7 @@ const handleFormSubmit = (e) => {
       promptInput.value = "";
       const botMsgDiv = createMessageElement(response, "bot-message");
       chatsContainer.appendChild(botMsgDiv);
-      scrollToBottom();
+      optimizedScrollToBottom();
       addTTSControls(botMsgDiv, response.replace(/<[^>]*>/g, ''));
       return;
     }
@@ -1389,7 +1846,7 @@ const handleFormSubmit = (e) => {
     
     const response = `
       <div class="avatar">
-        <img src="https://i.ibb.co/21jpMNhw/234421810-326887782452132-7028869078528396806-n-removebg-preview-1.png" alt="Bot Avatar" class="avatar-image">
+        <img src="${AVATAR_IMAGE_URL}" alt="Bot Avatar" class="avatar-image">
       </div>
       <div class="message-content">
         <p class="message-text"><strong>Insurance Cost Estimation:</strong></p>
@@ -1406,7 +1863,7 @@ const handleFormSubmit = (e) => {
     promptInput.value = "";
     const botMsgDiv = createMessageElement(response, "bot-message");
     chatsContainer.appendChild(botMsgDiv);
-    scrollToBottom();
+    optimizedScrollToBottom();
     addTTSControls(botMsgDiv, response.replace(/<[^>]*>/g, ''));
     return;
   }
@@ -1429,97 +1886,175 @@ const handleFormSubmit = (e) => {
   const isKurdish = isKurdishText(userMessage);
   
   // Generate user message HTML with optional file attachment and language indicator
+  const currentTimestamp = Date.now();
   const userMsgHTML = `
-    <div class="avatar">
-      <img src="https://i.ibb.co/21jpMNhw/234421810-326887782452132-7028869078528396806-n-removebg-preview-1.png" alt="User Avatar" class="avatar-image">
+    <div class="avatar" aria-hidden="true">
+      <img src="${AVATAR_IMAGE_URL}" alt="User Avatar" class="avatar-image">
     </div>
     <div class="message-content">
-      <div class="message-header">
-        <span class="language-indicator">Language: ${detectedLanguage}</span>
+      <div class="message-header" aria-label="Message language: ${detectedLanguage}">
+        <span class="language-indicator" aria-hidden="true">Language: ${detectedLanguage}</span>
+        <span class="message-timestamp" aria-label="Sent ${formatTimestamp(currentTimestamp)}">${formatTimestamp(currentTimestamp)}</span>
       </div>
       <p class="message-text ${isKurdish ? 'kurdish-text' : ''}"></p>
-      ${userData.file.data ? (userData.file.isImage ? `<img src="data:${userData.file.mime_type};base64,${userData.file.data}" class="img-attachment" />` : `<p class="file-attachment"><span class="material-symbols-rounded">description</span>${userData.file.fileName}</p>`) : ""}
+      ${userData.file.data ? (userData.file.isImage ? `<img src="data:${userData.file.mime_type};base64,${userData.file.data}" class="img-attachment" alt="Uploaded image" loading="lazy" decoding="async" />` : `<p class="file-attachment"><span class="material-symbols-rounded" aria-hidden="true">description</span>${userData.file.fileName}</p>`) : ""}
     </div>
   `;
   const userMsgDiv = createMessageElement(userMsgHTML, "user-message");
   userMsgDiv.querySelector(".message-text").textContent = userData.message;
+  
+  // Add copy button to user messages
+  setTimeout(() => addCopyButton(userMsgDiv), 100);
   userMsgDiv.style.animation = "messageEntrance 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)";
   chatsContainer.appendChild(userMsgDiv);
-  scrollToBottom();
-  chatHistory.push({ type: 'user', text: userData.message, ts: Date.now() });
+  optimizedScrollToBottom();
+    chatHistory.push({ type: 'user', text: userData.message, ts: currentTimestamp });
+    saveChatHistory(); // Auto-save after each message
   
   // Add typing indicator
   const typingIndicator = createTypingIndicator();
   chatsContainer.appendChild(typingIndicator);
-  scrollToBottom();
+  optimizedScrollToBottom();
   
   setTimeout(() => {
     // Remove typing indicator
     typingIndicator.remove();
     
     // Generate bot message HTML and add in the chat container
+    const botTimestamp = Date.now();
     const botMsgHTML = `
       <div class="avatar">
-        <img src="https://i.ibb.co/21jpMNhw/234421810-326887782452132-7028869078528396806-n-removebg-preview-1.png" alt="Bot Avatar" class="avatar-image">
+        <img src="${AVATAR_IMAGE_URL}" alt="Bot Avatar" class="avatar-image">
       </div>
       <div class="message-content">
+        <div class="message-header">
+          <span class="message-timestamp" aria-label="Responding at ${formatTimestamp(botTimestamp)}">${formatTimestamp(botTimestamp)}</span>
+        </div>
         <p class="message-text">Just a sec...</p>
       </div>
     `;
     const botMsgDiv = createMessageElement(botMsgHTML, "bot-message", "loading");
     botMsgDiv.style.animation = "messageEntrance 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)";
     chatsContainer.appendChild(botMsgDiv);
-    scrollToBottom();
+    optimizedScrollToBottom();
     generateResponse(botMsgDiv);
-  }, 800); // 800 ms delay
+  }, CONFIG.ANIMATIONS.TYPING_INDICATOR_DELAY);
 };
 
-// Handle file input change (file upload) with enhanced security
-fileInput.addEventListener("change", () => {
-  const file = fileInput.files[0];
+// File upload handler with drag & drop support
+const handleFileUpload = (file) => {
   if (!file) return;
   
   // Validate file size
-  if (file.size > MAX_FILE_SIZE) {
-    alert(`File size exceeds ${MAX_FILE_SIZE / (1024 * 1024)}MB limit. Please choose a smaller file.`);
-    fileInput.value = "";
+  if (file.size > CONFIG.LIMITS.FILE_SIZE) {
+    showToast(`File size exceeds ${CONFIG.LIMITS.FILE_SIZE / (1024 * 1024)}MB limit. Please choose a smaller file.`, 'error');
     return;
   }
   
   // Validate file type
   if (!ALLOWED_FILE_TYPES.includes(file.type)) {
-    alert('File type not allowed. Please upload an image, PDF, TXT, or CSV file.');
-    fileInput.value = "";
+    showToast('File type not allowed. Please upload an image, PDF, TXT, or CSV file.', 'error');
     return;
   }
   
   // Additional security check for file name
   const fileName = file.name;
   if (fileName.includes('..') || fileName.includes('/') || fileName.includes('\\')) {
-    alert('Invalid file name. File name contains illegal characters.');
-    fileInput.value = "";
+    showToast('Invalid file name. File name contains illegal characters.', 'error');
     return;
   }
   
   const isImage = file.type.startsWith("image/");
   const reader = new FileReader();
+  
+  // Show loading state
+  fileUploadWrapper.classList.add("uploading");
+  const existingStatus = fileUploadWrapper.querySelector('.file-upload-status');
+  if (existingStatus) existingStatus.remove();
+  
+  const loadingText = document.createElement('div');
+  loadingText.className = 'file-upload-status';
+  loadingText.textContent = 'Reading file...';
+  fileUploadWrapper.appendChild(loadingText);
+  
   reader.readAsDataURL(file);
   reader.onload = (e) => {
     fileInput.value = "";
     const base64String = e.target.result.split(",")[1];
     
     // Additional validation of base64 content
-    if (base64String.length > 10 * 1024 * 1024) { // 10MB limit for base64
-      alert('File content too large after encoding.');
+    if (base64String.length > CONFIG.LIMITS.BASE64_SIZE) {
+      showToast('File content too large after encoding.', 'error');
+      fileUploadWrapper.classList.remove("uploading");
+      loadingText.remove();
       return;
     }
     
+    showToast('File attached successfully!', 'success');
+    
     fileUploadWrapper.querySelector(".file-preview").src = e.target.result;
     fileUploadWrapper.classList.add("active", isImage ? "img-attached" : "file-attached");
+    fileUploadWrapper.classList.remove("uploading");
+    loadingText.remove();
+    
     // Store file data in userData obj
     userData.file = { fileName: file.name, data: base64String, mime_type: file.type, isImage };
   };
+  
+  reader.onerror = () => {
+    showToast('Failed to read file. Please try again.', 'error');
+    fileInput.value = "";
+    fileUploadWrapper.classList.remove("uploading");
+    loadingText.remove();
+  };
+  
+  reader.onprogress = (e) => {
+    if (e.lengthComputable) {
+      const percent = Math.round((e.loaded / e.total) * 100);
+      loadingText.textContent = `Reading file... ${percent}%`;
+    }
+  };
+};
+
+fileInput.addEventListener("change", () => {
+  const file = fileInput.files[0];
+  handleFileUpload(file);
 });
+
+// Drag & Drop functionality
+const promptContainer = document.querySelector('.prompt-container');
+
+if (promptContainer) {
+  // Prevent default drag behaviors
+  ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    promptContainer.addEventListener(eventName, (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+    }, false);
+  });
+
+  // Visual feedback for drag over
+  ['dragenter', 'dragover'].forEach(eventName => {
+    promptContainer.addEventListener(eventName, () => {
+      promptContainer.classList.add('drag-over');
+    }, false);
+  });
+
+  ['dragleave', 'drop'].forEach(eventName => {
+    promptContainer.addEventListener(eventName, () => {
+      promptContainer.classList.remove('drag-over');
+    }, false);
+  });
+
+  // Handle dropped files
+  promptContainer.addEventListener('drop', (e) => {
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) {
+      // Only handle first file
+      handleFileUpload(files[0]);
+    }
+  }, false);
+}
 
 // Cancel file upload
 document.querySelector("#cancel-file-btn").addEventListener("click", () => {
@@ -1527,18 +2062,29 @@ document.querySelector("#cancel-file-btn").addEventListener("click", () => {
   fileUploadWrapper.classList.remove("file-attached", "img-attached", "active");
 });
 
-// Stop Bot Response
-document.querySelector("#stop-response-btn").addEventListener("click", () => {
+// Stop Bot Response with proper cleanup
+const stopResponse = () => {
   controller?.abort();
+  controller = null;
   userData.file = {};
+  
+  if (typingInterval) {
   clearInterval(typingInterval);
+    typingInterval = null;
+  }
+  
   const loadingBotMsg = chatsContainer.querySelector(".bot-message.loading");
   if (loadingBotMsg) {
     loadingBotMsg.classList.remove("loading");
-    loadingBotMsg.querySelector(".message-text").textContent = "Response generation stopped.";
+    const textEl = loadingBotMsg.querySelector(".message-text");
+    if (textEl) {
+      textEl.textContent = "Response generation stopped.";
+    }
   }
   document.body.classList.remove("bot-responding");
-});
+};
+
+document.querySelector("#stop-response-btn")?.addEventListener("click", stopResponse);
 
 // Toggle dark/light theme
 themeToggleBtn.addEventListener("click", () => {
@@ -1563,31 +2109,118 @@ if (languageSelect) {
   });
 }
 
-// Delete all chats
+// Export chat history
+document.querySelector("#export-chats-btn")?.addEventListener("click", () => {
+  showExportMenu();
+});
+
+// Voice input toggle
+document.querySelector("#voice-input-btn")?.addEventListener("click", () => {
+  toggleVoiceInput();
+});
+
+// Delete all chats with better UX
 document.querySelector("#delete-chats-btn").addEventListener("click", () => {
-  if (confirm("Are you sure you want to clear the chat history?")) {
+  if (chatHistory.length === 0) {
+    showToast('No chat history to clear.', 'info');
+    return;
+  }
+  
+    // Create a custom confirmation
+    const confirmDelete = () => {
     chatHistory.length = 0;
     chatsContainer.innerHTML = "";
     document.body.classList.remove("chats-active", "bot-responding");
-  }
+      clearSavedChatHistory();
+      showToast('Chat history cleared successfully!', 'success');
+    };
+    
+    // Use browser confirm for now, but show toast
+    if (confirm("Are you sure you want to clear the chat history?")) {
+      confirmDelete();
+    }
 });
 
-// Handle suggestions click
-document.querySelectorAll(".suggestions-item").forEach((suggestion) => {
-  suggestion.addEventListener("click", () => {
-    promptInput.value = suggestion.querySelector(".text").textContent;
-    promptForm.dispatchEvent(new Event("submit"));
-  });
-  
-  // Add hover effect to suggestions
-  suggestion.addEventListener("mouseenter", () => {
-    suggestion.style.transform = "translateY(-10px)";
-  });
-  
-  suggestion.addEventListener("mouseleave", () => {
-    suggestion.style.transform = "translateY(0)";
-  });
-});
+  // Enhanced keyboard shortcuts and navigation
+  document.addEventListener('keydown', (e) => {
+    const isCtrl = e.ctrlKey || e.metaKey;
+    const target = e.target;
+    const isInputFocused = target === promptInput || target.tagName === 'INPUT' || target.tagName === 'TEXTAREA';
+    
+    // Escape key: Close modals, sidebars
+    if (e.key === 'Escape') {
+      if (sidebar?.classList.contains('open')) {
+        closeSidebar();
+        e.preventDefault();
+        return;
+      }
+      if (securityPanel?.classList.contains('open')) {
+        securityPanel.classList.remove('open');
+        e.preventDefault();
+        return;
+      }
+      if (document.querySelector('.export-menu')?.classList.contains('show')) {
+        document.querySelector('.export-menu')?.classList.remove('show');
+        setTimeout(() => document.querySelector('.export-menu')?.remove(), 300);
+        e.preventDefault();
+        return;
+      }
+      if (document.querySelector('.image-zoom-viewer')?.classList.contains('show')) {
+        document.querySelector('.image-zoom-viewer')?.classList.remove('show');
+        e.preventDefault();
+        return;
+      }
+      // Focus back to input
+      if (!isInputFocused) {
+        promptInput?.focus();
+      }
+    }
+    
+    // Ctrl/Cmd + K: Focus input (works everywhere)
+    if (isCtrl && e.key === 'k') {
+      e.preventDefault();
+      promptInput?.focus();
+      return;
+    }
+    
+    // Ctrl/Cmd + /: Toggle theme (works everywhere)
+    if (isCtrl && e.key === '/') {
+      e.preventDefault();
+      themeToggleBtn?.click();
+      return;
+    }
+    
+    // Ctrl/Cmd + E: Export chat (works everywhere)
+    if (isCtrl && e.key === 'e') {
+      e.preventDefault();
+      document.querySelector("#export-chats-btn")?.click();
+      return;
+    }
+    
+    // Ctrl/Cmd + Shift + D: Clear chat (works everywhere)
+    if (isCtrl && e.shiftKey && e.key === 'D') {
+      e.preventDefault();
+      document.querySelector("#delete-chats-btn")?.click();
+      return;
+    }
+    
+    // Ctrl/Cmd + Shift + M: Toggle voice input (works everywhere)
+    if (isCtrl && e.shiftKey && e.key === 'M') {
+      e.preventDefault();
+      document.querySelector("#voice-input-btn")?.click();
+      return;
+    }
+    
+    // Arrow Up: Edit last message (when input is focused and empty)
+    if (e.key === 'ArrowUp' && isInputFocused && promptInput.value === '') {
+      const lastUserMessage = chatHistory.filter(msg => msg.type === 'user').pop();
+      if (lastUserMessage) {
+        e.preventDefault();
+        promptInput.value = lastUserMessage.text;
+        showToast('Last message loaded. Edit and press Enter to send.', 'info', 2000);
+      }
+    }
+ });
 
 // Show/hide controls for mobile on prompt input focus
 document.addEventListener("click", ({ target }) => {
@@ -1734,10 +2367,10 @@ document.getElementById('save-gemini-key')?.addEventListener('click', () => {
   const keyInput = document.getElementById('gemini-api-key');
   if (keyInput && keyInput.value.trim()) {
     if (setApiKeys(keyInput.value.trim(), null)) {
-      alert('Gemini API key saved successfully!');
+      showToast('Gemini API key saved successfully!', 'success');
       keyInput.value = '';
     } else {
-      alert('Failed to save Gemini API key. Please try again.');
+      showToast('Failed to save Gemini API key. Please try again.', 'error');
     }
   }
 });
@@ -1746,10 +2379,10 @@ document.getElementById('save-deepai-key')?.addEventListener('click', () => {
   const keyInput = document.getElementById('deepai-api-key');
   if (keyInput && keyInput.value.trim()) {
     if (setApiKeys(null, keyInput.value.trim())) {
-      alert('DeepAI API key saved successfully!');
+      showToast('DeepAI API key saved successfully!', 'success');
       keyInput.value = '';
     } else {
-      alert('Failed to save DeepAI API key. Please try again.');
+      showToast('Failed to save DeepAI API key. Please try again.', 'error');
     }
   }
 });
@@ -1758,10 +2391,10 @@ document.getElementById('save-hf-key')?.addEventListener('click', () => {
   const keyInput = document.getElementById('hf-api-key');
   if (keyInput && keyInput.value.trim()) {
     if (setHfApiKey(keyInput.value.trim())) {
-      alert('Hugging Face API key saved successfully!');
+      showToast('Hugging Face API key saved successfully!', 'success');
       keyInput.value = '';
     } else {
-      alert('Failed to save Hugging Face API key. Please try again.');
+      showToast('Failed to save Hugging Face API key. Please try again.', 'error');
     }
   }
 });
@@ -1773,23 +2406,71 @@ document.getElementById('clear-all-keys')?.addEventListener('click', () => {
       localStorage.removeItem('geminiApiKey');
       localStorage.removeItem('deepAiApiKey');
       localStorage.removeItem('hfApiKey');
-      alert('All API keys have been cleared successfully!');
+      showToast('All API keys have been cleared successfully!', 'success');
     } catch (e) {
       console.error('Failed to clear API keys:', e);
-      alert('Failed to clear API keys. Please try again.');
+      showToast('Failed to clear API keys. Please try again.', 'error');
     }
   }
 });
 
+// Performance: Lazy load images with optimized observer
+const lazyLoadImages = () => {
+  if ('IntersectionObserver' in window) {
+    const imageObserver = new IntersectionObserver((entries, observer) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const img = entry.target;
+          if (img.dataset.src) {
+            // Add loading class for fade-in effect
+            img.classList.add('loading');
+            
+            // Create a new image to preload
+            const preloadImg = new Image();
+            preloadImg.onload = () => {
+              img.src = img.dataset.src;
+              img.removeAttribute('data-src');
+              img.classList.remove('loading');
+              img.classList.add('loaded');
+            };
+            preloadImg.onerror = () => {
+              img.classList.remove('loading');
+              img.classList.add('error');
+            };
+            preloadImg.src = img.dataset.src;
+          }
+          observer.unobserve(img);
+        }
+      });
+    }, {
+      rootMargin: '50px', // Start loading 50px before image enters viewport
+      threshold: 0.01
+    });
+    
+    document.querySelectorAll('img[data-src]').forEach(img => {
+      imageObserver.observe(img);
+    });
+  } else {
+    // Fallback for browsers without IntersectionObserver
+    document.querySelectorAll('img[data-src]').forEach(img => {
+      img.src = img.dataset.src;
+      img.removeAttribute('data-src');
+    });
+  }
+};
+
+
 // Add welcome message
 document.addEventListener("DOMContentLoaded", () => {
+  const welcomeTimestamp = Date.now();
   const welcomeMsgHTML = `
-    <div class="avatar">
-      <img src="https://i.ibb.co/21jpMNhw/234421810-326887782452132-7028869078528396806-n-removebg-preview-1.png" alt="Bot Avatar" class="avatar-image">
+    <div class="avatar" aria-hidden="true">
+      <img src="${AVATAR_IMAGE_URL}" alt="Bot Avatar" class="avatar-image">
     </div>
     <div class="message-content">
-      <div class="message-header">
-        <span class="language-indicator">Language: English</span>
+      <div class="message-header" aria-label="Message language: English">
+        <span class="language-indicator" aria-hidden="true">Language: English</span>
+        <span class="message-timestamp" aria-label="Sent ${formatTimestamp(welcomeTimestamp)}">${formatTimestamp(welcomeTimestamp)}</span>
       </div>
       <p class="message-text">Hello! I'm your zansti sardam institute AI assistant. How can I help you today? You can ask me anything, generate images, or upload files for analysis.</p>
     </div>
@@ -1797,9 +2478,803 @@ document.addEventListener("DOMContentLoaded", () => {
   const welcomeMsgDiv = createMessageElement(welcomeMsgHTML, "bot-message");
   chatsContainer.appendChild(welcomeMsgDiv);
   
-  // Add subtle animation to welcome message
+  // Add copy button to welcome message
   setTimeout(() => {
+    addCopyButton(welcomeMsgDiv);
+    addTTSControls(welcomeMsgDiv, welcomeMsgDiv.querySelector('.message-text').textContent);
     welcomeMsgDiv.style.opacity = "1";
     welcomeMsgDiv.style.transform = "translateY(0)";
   }, 100);
+  
+  // Load saved chat history
+  const hasHistory = loadChatHistory();
+  if (hasHistory) {
+    renderLoadedChatHistory();
+  }
+  
+  // Initialize lazy loading
+  lazyLoadImages();
+  
+  // Create particle effects for logo
+  createLogoParticles();
+  
+  // Initialize voice recognition
+  initSpeechRecognition();
+  
+  // Add image zoom handlers
+  setTimeout(() => {
+    addImageZoomHandlers();
+    // Observer for new images
+    const observer = new MutationObserver(() => {
+      addImageZoomHandlers();
+    });
+    observer.observe(chatsContainer, { childList: true, subtree: true });
+  }, 500);
+  
+  // Performance: Preconnect to critical domains
+  if ('connection' in navigator) {
+    const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    if (connection && connection.effectiveType === 'slow-2g' || connection.effectiveType === '2g') {
+      // Reduce animations on slow connections
+      document.body.classList.add('slow-connection');
+    }
+  }
+  
+  // Announce page load to screen readers
+  const announcement = document.createElement('div');
+  announcement.setAttribute('role', 'status');
+  announcement.setAttribute('aria-live', 'polite');
+  announcement.setAttribute('aria-atomic', 'true');
+  announcement.className = 'sr-only';
+  announcement.style.cssText = 'position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden;';
+  announcement.textContent = 'zansti sardam AI Chatbot loaded. Ready to assist.';
+  document.body.appendChild(announcement);
+  
+  setTimeout(() => {
+    if (document.body.contains(announcement)) {
+      document.body.removeChild(announcement);
+    }
+  }, 3000);
 });
+
+// Create particle effects around logo
+const createLogoParticles = () => {
+  const logoContainer = document.querySelector('.logo-container');
+  if (!logoContainer || !window.matchMedia('(prefers-reduced-motion: no-preference)').matches) return;
+  
+  const particleCount = 8;
+  const particles = [];
+  
+  for (let i = 0; i < particleCount; i++) {
+    const particle = document.createElement('div');
+    particle.className = 'particle';
+    const angle = (360 / particleCount) * i;
+    const distance = 80;
+    const tx = Math.cos(angle * Math.PI / 180) * distance;
+    const ty = Math.sin(angle * Math.PI / 180) * distance;
+    particle.style.setProperty('--tx', `${tx}px`);
+    particle.style.setProperty('--ty', `${ty}px`);
+    particle.style.animationDelay = `${i * 0.5}s`;
+    logoContainer.appendChild(particle);
+    particles.push(particle);
+  }
+  
+  // Cleanup on page unload
+  window.addEventListener('beforeunload', () => {
+    particles.forEach(p => p.remove());
+  });
+};
+
+// ==========================================
+// TEXT-TO-SPEECH FUNCTIONALITY
+// ==========================================
+
+// Add TTS controls to bot messages
+const addTTSControls = (messageElement, textContent) => {
+  if (!textContent || !messageElement) return;
+  
+  // Check if browser supports Web Speech API
+  if (!('speechSynthesis' in window)) return;
+  
+  const messageContent = messageElement.querySelector('.message-content');
+  if (!messageContent) return;
+  
+  // Check if TTS controls already exist
+  if (messageContent.querySelector('.tts-controls')) return;
+  
+  // Create TTS controls container
+  const ttsControls = document.createElement('div');
+  ttsControls.className = 'tts-controls';
+  ttsControls.innerHTML = `
+    <button class="tts-btn" aria-label="Read message aloud" title="Read message">
+      <span class="material-symbols-rounded" aria-hidden="true">volume_up</span>
+    </button>
+    <button class="tts-stop-btn" style="display: none;" aria-label="Stop reading" title="Stop reading">
+      <span class="material-symbols-rounded" aria-hidden="true">stop</span>
+    </button>
+  `;
+  
+  const playBtn = ttsControls.querySelector('.tts-btn');
+  const stopBtn = ttsControls.querySelector('.tts-stop-btn');
+  let currentUtterance = null;
+  
+  playBtn.addEventListener('click', () => {
+    if (currentUtterance && speechSynthesis.speaking) {
+      speechSynthesis.cancel();
+      return;
+    }
+    
+    // Clean text for speech
+    const cleanText = textContent
+      .replace(/<[^>]*>/g, '') // Remove HTML tags
+      .replace(/```[\s\S]*?```/g, '') // Remove code blocks
+      .replace(/`[^`]+`/g, '') // Remove inline code
+      .replace(/\*\*([^*]+)\*\*/g, '$1') // Remove bold
+      .replace(/\*([^*]+)\*/g, '$1') // Remove italic
+      .trim();
+    
+    if (!cleanText) return;
+    
+    // Create speech utterance
+    currentUtterance = new SpeechSynthesisUtterance(cleanText);
+    
+    // Detect language and set voice
+    const detectedLang = detectLanguage(cleanText);
+    let lang = 'en-US';
+    if (detectedLang.includes('Arabic') || detectedLang.includes('العربية')) {
+      lang = 'ar-SA';
+    } else if (detectedLang.includes('Kurdish')) {
+      lang = 'ckb'; // Kurdish Sorani
+    }
+    
+    currentUtterance.lang = lang;
+    currentUtterance.rate = 1.0;
+    currentUtterance.pitch = 1.0;
+    currentUtterance.volume = 0.8;
+    
+    // Event handlers
+    currentUtterance.onstart = () => {
+      playBtn.style.display = 'none';
+      stopBtn.style.display = 'inline-flex';
+      messageElement.classList.add('speaking');
+    };
+    
+    currentUtterance.onend = () => {
+      playBtn.style.display = 'inline-flex';
+      stopBtn.style.display = 'none';
+      messageElement.classList.remove('speaking');
+      currentUtterance = null;
+    };
+    
+    currentUtterance.onerror = () => {
+      playBtn.style.display = 'inline-flex';
+      stopBtn.style.display = 'none';
+      messageElement.classList.remove('speaking');
+      currentUtterance = null;
+      showToast('Text-to-speech failed. Please try again.', 'error');
+    };
+    
+    speechSynthesis.speak(currentUtterance);
+  });
+  
+  stopBtn.addEventListener('click', () => {
+    speechSynthesis.cancel();
+    playBtn.style.display = 'inline-flex';
+    stopBtn.style.display = 'none';
+    messageElement.classList.remove('speaking');
+    currentUtterance = null;
+  });
+  
+  messageContent.appendChild(ttsControls);
+};
+
+// ==========================================
+// COPY TO CLIPBOARD FUNCTIONALITY
+// ==========================================
+
+// Copy message text to clipboard
+const copyToClipboard = async (text, button) => {
+  try {
+    const cleanText = text.replace(/<[^>]*>/g, '').trim();
+    await navigator.clipboard.writeText(cleanText);
+    
+    // Visual feedback
+    if (button) {
+      const originalHTML = button.innerHTML;
+      button.innerHTML = '<span class="material-symbols-rounded" aria-hidden="true">check</span>';
+      button.classList.add('copied');
+      setTimeout(() => {
+        button.innerHTML = originalHTML;
+        button.classList.remove('copied');
+      }, 2000);
+    }
+    
+    showToast('Message copied to clipboard!', 'success');
+  } catch (err) {
+    console.error('Failed to copy:', err);
+    showToast('Failed to copy message', 'error');
+  }
+};
+
+// Add copy button to messages
+const addCopyButton = (messageElement) => {
+  const messageContent = messageElement.querySelector('.message-content');
+  if (!messageContent || messageContent.querySelector('.copy-btn')) return;
+  
+  const messageText = messageElement.querySelector('.message-text');
+  if (!messageText) return;
+  
+  const copyBtn = document.createElement('button');
+  copyBtn.className = 'copy-btn';
+  copyBtn.setAttribute('aria-label', 'Copy message');
+  copyBtn.title = 'Copy message';
+  copyBtn.innerHTML = '<span class="material-symbols-rounded" aria-hidden="true">content_copy</span>';
+  
+  copyBtn.addEventListener('click', () => {
+    copyToClipboard(messageText.textContent || messageText.innerHTML, copyBtn);
+  });
+  
+  messageContent.appendChild(copyBtn);
+};
+
+// ==========================================
+// TOAST NOTIFICATION SYSTEM
+// ==========================================
+
+// Show toast notification
+const showToast = (message, type = 'info', duration = 3000) => {
+  // Remove existing toasts
+  const existingToasts = document.querySelectorAll('.toast');
+  existingToasts.forEach(toast => toast.remove());
+  
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  toast.setAttribute('role', 'alert');
+  toast.setAttribute('aria-live', 'assertive');
+  
+  const iconMap = {
+    success: 'check_circle',
+    error: 'error',
+    warning: 'warning',
+    info: 'info'
+  };
+  
+  toast.innerHTML = `
+    <span class="material-symbols-rounded toast-icon" aria-hidden="true">${iconMap[type] || iconMap.info}</span>
+    <span class="toast-message">${escapeHTML(message)}</span>
+    <button class="toast-close" aria-label="Close notification">
+      <span class="material-symbols-rounded" aria-hidden="true">close</span>
+    </button>
+  `;
+  
+  document.body.appendChild(toast);
+  
+  // Trigger animation
+  requestAnimationFrame(() => {
+    toast.classList.add('show');
+  });
+  
+  // Auto-remove
+  const timeout = setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => toast.remove(), 300);
+  }, duration);
+  
+  // Manual close
+  toast.querySelector('.toast-close').addEventListener('click', () => {
+    clearTimeout(timeout);
+    toast.classList.remove('show');
+    setTimeout(() => toast.remove(), 300);
+  });
+};
+
+// ==========================================
+// ENHANCED MESSAGE FORMATTING
+// ==========================================
+
+// Format message text with better markdown support
+const formatMessageText = (text) => {
+  if (!text) return '';
+  
+  // Preserve code blocks first
+  const codeBlocks = [];
+  let processedText = text.replace(/```([\s\S]*?)```/g, (match, code) => {
+    const index = codeBlocks.length;
+    codeBlocks.push(`<pre class="code-block"><code>${escapeHTML(code.trim())}</code></pre>`);
+    return `__CODE_BLOCK_${index}__`;
+  });
+  
+  // Preserve inline code
+  const inlineCodes = [];
+  processedText = processedText.replace(/`([^`]+)`/g, (match, code) => {
+    const index = inlineCodes.length;
+    inlineCodes.push(`<code class="inline-code">${escapeHTML(code)}</code>`);
+    return `__INLINE_CODE_${index}__`;
+  });
+  
+  // Format lists
+  processedText = processedText.replace(/^\s*[-*+]\s+(.+)$/gm, '<li>$1</li>');
+  processedText = processedText.replace(/(<li>.*<\/li>)/s, '<ul class="message-list">$1</ul>');
+  
+  // Format numbered lists
+  processedText = processedText.replace(/^\s*\d+\.\s+(.+)$/gm, '<li>$1</li>');
+  
+  // Format bold (preserving existing)
+  processedText = processedText.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  processedText = processedText.replace(/(\*\*)([^*]+)(\*\*)/g, '<strong>$2</strong>');
+  
+  // Format italic
+  processedText = processedText.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');
+  
+  // Format links
+  processedText = processedText.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+  
+  // Restore code blocks and inline code
+  codeBlocks.forEach((block, index) => {
+    processedText = processedText.replace(`__CODE_BLOCK_${index}__`, block);
+  });
+  inlineCodes.forEach((code, index) => {
+    processedText = processedText.replace(`__INLINE_CODE_${index}__`, code);
+  });
+  
+  // Format line breaks
+  processedText = processedText.replace(/\n\n/g, '</p><p>');
+  processedText = processedText.replace(/\n/g, '<br>');
+  
+  return `<p>${processedText}</p>`;
+};
+
+// Format timestamp
+const formatTimestamp = (timestamp) => {
+  const date = new Date(timestamp);
+  const now = new Date();
+  const diffMs = now - date;
+  const diffMins = Math.floor(diffMs / 60000);
+  
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins}m ago`;
+  
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffHours < 24) return `${diffHours}h ago`;
+  
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays < 7) return `${diffDays}d ago`;
+  
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined });
+};
+
+// ==========================================
+// CHAT PERSISTENCE
+// ==========================================
+
+// Save chat history to localStorage
+const saveChatHistory = () => {
+  try {
+    localStorage.setItem(STORAGE_KEYS.CHAT_HISTORY, JSON.stringify(chatHistory));
+  } catch (e) {
+    console.error('Failed to save chat history:', e);
+    showToast('Failed to save chat history. Storage may be full.', 'warning');
+  }
+};
+
+// Load chat history from localStorage
+const loadChatHistory = () => {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEYS.CHAT_HISTORY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      chatHistory.push(...parsed);
+      return parsed.length > 0;
+    }
+  } catch (e) {
+    console.error('Failed to load chat history:', e);
+  }
+  return false;
+};
+
+// Clear saved chat history
+const clearSavedChatHistory = () => {
+  try {
+    localStorage.removeItem(STORAGE_KEYS.CHAT_HISTORY);
+  } catch (e) {
+    console.error('Failed to clear saved chat history:', e);
+  }
+};
+
+// Render loaded chat history
+const renderLoadedChatHistory = () => {
+  if (chatHistory.length === 0) return;
+  
+  chatHistory.forEach((item) => {
+    if (item.type === 'user') {
+      const userMsgHTML = `
+        <div class="avatar" aria-hidden="true">
+          <img src="${AVATAR_IMAGE_URL}" alt="User Avatar" class="avatar-image">
+        </div>
+        <div class="message-content">
+          <div class="message-header">
+            <span class="message-timestamp">${formatTimestamp(item.ts)}</span>
+          </div>
+          <p class="message-text">${escapeHTML(item.text)}</p>
+        </div>
+      `;
+      const userMsgDiv = createMessageElement(userMsgHTML, "user-message");
+      chatsContainer.appendChild(userMsgDiv);
+      setTimeout(() => addCopyButton(userMsgDiv), 50);
+    } else if (item.type === 'bot') {
+      const botMsgHTML = `
+        <div class="avatar">
+          <img src="${AVATAR_IMAGE_URL}" alt="Bot Avatar" class="avatar-image">
+        </div>
+        <div class="message-content">
+          <div class="message-header">
+            <span class="message-timestamp">${formatTimestamp(item.ts)}</span>
+          </div>
+          <p class="message-text">${escapeHTML(item.text)}</p>
+        </div>
+      `;
+      const botMsgDiv = createMessageElement(botMsgHTML, "bot-message");
+      chatsContainer.appendChild(botMsgDiv);
+      setTimeout(() => {
+        addTTSControls(botMsgDiv, item.text);
+        addCopyButton(botMsgDiv);
+      }, 50);
+    } else if (item.type === 'bot-image' && item.url) {
+      const imgHTML = `
+        <div class="avatar">
+          <img src="${AVATAR_IMAGE_URL}" alt="Bot Avatar" class="avatar-image">
+        </div>
+        <div class="message-content">
+          <div class="message-header">
+            <span class="message-timestamp">${formatTimestamp(item.ts)}</span>
+          </div>
+          <img src="${item.url}" class="generated-image" alt="Generated image" loading="lazy" />
+        </div>
+      `;
+      const imgMsgDiv = createMessageElement(imgHTML, "bot-message");
+      chatsContainer.appendChild(imgMsgDiv);
+    }
+  });
+  
+  optimizedScrollToBottom();
+  if (chatHistory.length > 0) {
+    document.body.classList.add("chats-active");
+  }
+};
+
+// ==========================================
+// EXPORT CHAT HISTORY
+// ==========================================
+
+// Export chat history as JSON
+const exportChatHistoryJSON = () => {
+  if (chatHistory.length === 0) {
+    showToast('No chat history to export.', 'info');
+    return;
+  }
+  
+  const dataStr = JSON.stringify(chatHistory, null, 2);
+  const dataBlob = new Blob([dataStr], { type: 'application/json' });
+  const url = URL.createObjectURL(dataBlob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `zansti-chat-history-${new Date().toISOString().split('T')[0]}.json`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+  showToast('Chat history exported as JSON!', 'success');
+};
+
+// Export chat history as TXT
+const exportChatHistoryTXT = () => {
+  if (chatHistory.length === 0) {
+    showToast('No chat history to export.', 'info');
+    return;
+  }
+  
+  let text = 'zansti sardam Chat History Export\n';
+  text += `Generated: ${new Date().toLocaleString()}\n`;
+  text += '='.repeat(50) + '\n\n';
+  
+  chatHistory.forEach((item, index) => {
+    const timestamp = new Date(item.ts).toLocaleString();
+    text += `[${timestamp}] ${item.type.toUpperCase()}:\n`;
+    
+    if (item.type === 'user' || item.type === 'bot') {
+      text += `${item.text}\n`;
+    } else if (item.type === 'bot-image') {
+      text += `Image: ${item.url}\n`;
+    } else if (item.type === 'error') {
+      text += `Error: ${item.text}\n`;
+    }
+    
+    text += '\n' + '-'.repeat(50) + '\n\n';
+  });
+  
+  const dataBlob = new Blob([text], { type: 'text/plain' });
+  const url = URL.createObjectURL(dataBlob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `zansti-chat-history-${new Date().toISOString().split('T')[0]}.txt`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+  showToast('Chat history exported as TXT!', 'success');
+};
+
+// Export menu handler
+const showExportMenu = () => {
+  if (chatHistory.length === 0) {
+    showToast('No chat history to export.', 'info');
+    return;
+  }
+  
+  // Create export menu
+  const menu = document.createElement('div');
+  menu.className = 'export-menu';
+  menu.innerHTML = `
+    <div class="export-menu-header">
+      <h3>Export Chat History</h3>
+      <button class="export-menu-close" aria-label="Close menu">
+        <span class="material-symbols-rounded">close</span>
+      </button>
+    </div>
+    <div class="export-menu-options">
+      <button class="export-option" data-format="json">
+        <span class="material-symbols-rounded">code</span>
+        <span>Export as JSON</span>
+      </button>
+      <button class="export-option" data-format="txt">
+        <span class="material-symbols-rounded">description</span>
+        <span>Export as TXT</span>
+      </button>
+    </div>
+  `;
+  
+  document.body.appendChild(menu);
+  
+  // Close menu handlers
+  const closeMenu = () => {
+    menu.classList.remove('show');
+    setTimeout(() => menu.remove(), 300);
+  };
+  
+  menu.querySelector('.export-menu-close').addEventListener('click', closeMenu);
+  menu.addEventListener('click', (e) => {
+    if (e.target.closest('.export-option')) {
+      const format = e.target.closest('.export-option').dataset.format;
+      closeMenu();
+      if (format === 'json') {
+        exportChatHistoryJSON();
+      } else if (format === 'txt') {
+        exportChatHistoryTXT();
+      }
+    }
+  });
+  
+  // Show menu with animation
+  requestAnimationFrame(() => menu.classList.add('show'));
+};
+
+// ==========================================
+// VOICE INPUT (SPEECH RECOGNITION)
+// ==========================================
+
+// Initialize speech recognition
+const initSpeechRecognition = () => {
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    return false;
+  }
+  
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SpeechRecognition();
+  
+  recognition.continuous = false;
+  recognition.interimResults = true;
+  recognition.lang = 'en-US'; // Default, will be adjusted based on selected language
+  
+  recognition.onstart = () => {
+    isListening = true;
+    const voiceBtn = document.getElementById('voice-input-btn');
+    if (voiceBtn) {
+      voiceBtn.classList.add('listening');
+      voiceBtn.innerHTML = '<span class="material-symbols-rounded">mic</span>';
+    }
+    showToast('Listening...', 'info', 2000);
+    promptInput.placeholder = 'Listening...';
+  };
+  
+  recognition.onresult = (event) => {
+    let interimTranscript = '';
+    let finalTranscript = '';
+    
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const transcript = event.results[i][0].transcript;
+      if (event.results[i].isFinal) {
+        finalTranscript += transcript + ' ';
+      } else {
+        interimTranscript += transcript;
+      }
+    }
+    
+    // Update input with interim results
+    if (interimTranscript) {
+      promptInput.value = finalTranscript + interimTranscript;
+    }
+    
+    // If final result, submit
+    if (finalTranscript.trim()) {
+      promptInput.value = finalTranscript.trim();
+      // Auto-submit after short delay
+      setTimeout(() => {
+        if (promptInput.value.trim()) {
+          promptForm.dispatchEvent(new Event('submit'));
+        }
+      }, 500);
+    }
+  };
+  
+  recognition.onerror = (event) => {
+    console.error('Speech recognition error:', event.error);
+    isListening = false;
+    const voiceBtn = document.getElementById('voice-input-btn');
+    if (voiceBtn) {
+      voiceBtn.classList.remove('listening');
+      voiceBtn.innerHTML = '<span class="material-symbols-rounded">mic</span>';
+    }
+    promptInput.placeholder = 'Message zansti sardam ...';
+    
+    let errorMsg = 'Voice input error. ';
+    switch(event.error) {
+      case 'no-speech':
+        errorMsg += 'No speech detected.';
+        break;
+      case 'audio-capture':
+        errorMsg += 'Microphone not accessible.';
+        break;
+      case 'not-allowed':
+        errorMsg += 'Microphone permission denied.';
+        break;
+      default:
+        errorMsg += 'Please try again.';
+    }
+    showToast(errorMsg, 'error');
+  };
+  
+  recognition.onend = () => {
+    isListening = false;
+    const voiceBtn = document.getElementById('voice-input-btn');
+    if (voiceBtn) {
+      voiceBtn.classList.remove('listening');
+      voiceBtn.innerHTML = '<span class="material-symbols-rounded">mic</span>';
+    }
+    promptInput.placeholder = 'Message zansti sardam ...';
+  };
+  
+  return true;
+};
+
+// Toggle voice input
+const toggleVoiceInput = () => {
+  if (!recognition) {
+    if (!initSpeechRecognition()) {
+      showToast('Voice input is not supported in your browser.', 'error');
+      return;
+    }
+  }
+  
+  if (isListening) {
+    recognition.stop();
+    isListening = false;
+  } else {
+    // Update language based on selected language
+    const lang = languageSelect?.value || 'en';
+    if (lang === 'ar') {
+      recognition.lang = 'ar-SA';
+    } else if (lang === 'ckb') {
+      recognition.lang = 'ku'; // Kurdish
+    } else {
+      recognition.lang = 'en-US';
+    }
+    
+    recognition.start();
+  }
+};
+
+// ==========================================
+// IMAGE ZOOM VIEWER
+// ==========================================
+
+// Create image zoom viewer
+const createImageZoomViewer = (imageUrl) => {
+  const viewer = document.createElement('div');
+  viewer.className = 'image-zoom-viewer';
+  viewer.innerHTML = `
+    <div class="image-zoom-content">
+      <button class="image-zoom-close" aria-label="Close image viewer">
+        <span class="material-symbols-rounded">close</span>
+      </button>
+      <img src="${imageUrl}" alt="Zoomed image" class="zoomed-image" />
+      <div class="image-zoom-actions">
+        <button class="image-zoom-action" aria-label="Download image" title="Download">
+          <span class="material-symbols-rounded">download</span>
+        </button>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(viewer);
+  
+  // Close handler
+  const closeViewer = () => {
+    viewer.classList.remove('show');
+    setTimeout(() => viewer.remove(), 300);
+  };
+  
+  viewer.querySelector('.image-zoom-close').addEventListener('click', closeViewer);
+  viewer.addEventListener('click', (e) => {
+    if (e.target === viewer) closeViewer();
+  });
+  
+  // Download handler
+  viewer.querySelector('.image-zoom-action').addEventListener('click', () => {
+    const link = document.createElement('a');
+    link.href = imageUrl;
+    link.download = `image-${Date.now()}.png`;
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  });
+  
+  // Show with animation
+  requestAnimationFrame(() => viewer.classList.add('show'));
+  
+  // Keyboard close
+  const handleKeyDown = (e) => {
+    if (e.key === 'Escape') {
+      closeViewer();
+      document.removeEventListener('keydown', handleKeyDown);
+    }
+  };
+  document.addEventListener('keydown', handleKeyDown);
+};
+
+// Add click handler to images
+const addImageZoomHandlers = () => {
+  document.querySelectorAll('.generated-image, .img-attachment').forEach(img => {
+    if (!img.dataset.zoomAdded) {
+      img.style.cursor = 'zoom-in';
+      img.addEventListener('click', () => {
+        createImageZoomViewer(img.src);
+      });
+      img.dataset.zoomAdded = 'true';
+    }
+  });
+};
+
+// ==========================================
+// RETRY FUNCTIONALITY
+// ==========================================
+
+// Add retry button to error messages
+const addRetryButton = (errorElement, originalMessage) => {
+  const retryBtn = document.createElement('button');
+  retryBtn.className = 'retry-btn';
+  retryBtn.innerHTML = '<span class="material-symbols-rounded">refresh</span> Retry';
+  retryBtn.setAttribute('aria-label', 'Retry request');
+  
+  retryBtn.addEventListener('click', () => {
+    errorElement.remove();
+    // Resubmit the original message
+    promptInput.value = originalMessage;
+    promptForm.dispatchEvent(new Event('submit'));
+  });
+  
+  const messageContent = errorElement.querySelector('.message-content');
+  if (messageContent) {
+    messageContent.appendChild(retryBtn);
+  }
+};

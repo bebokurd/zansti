@@ -4,11 +4,27 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+    <meta name="description" content="zansti sardam AI Chatbot - Your intelligent assistant powered by Gemini AI with multi-language support and image generation" />
+    <meta name="theme-color" content="#6366f1" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://generativelanguage.googleapis.com https://api.deepai.org https://image.pollinations.ai https://api-inference.huggingface.co; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; connect-src 'self' https://generativelanguage.googleapis.com https://api.deepai.org https://image.pollinations.ai https://api-inference.huggingface.co; font-src 'self' https://fonts.gstatic.com; object-src 'none'; frame-ancestors 'none';">
-    <title> zansti sardam   AI Chatbot</title>
+    <title>zansti sardam AI Chatbot - Intelligent Assistant</title>
+    
+    <!-- Resource hints for performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://generativelanguage.googleapis.com" />
+    <link rel="dns-prefetch" href="https://api.deepai.org" />
+    <link rel="dns-prefetch" href="https://image.pollinations.ai" />
+    <link rel="dns-prefetch" href="https://api-inference.huggingface.co" />
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="https://i.ibb.co/21jpMNhw/234421810-326887782452132-7028869078528396806-n-removebg-preview-1.png" as="image" />
+    
     <!-- Linking Google Fonts For Icons -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" />
     <link rel="stylesheet" href="style.css" />
     <link rel="stylesheet" href="animations.css" />
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💬</text></svg>">
@@ -18,7 +34,14 @@
       <!-- App Header -->
       <header class="app-header">
         <div class="logo-container">
-          <img src="https://i.ibb.co/21jpMNhw/234421810-326887782452132-7028869078528396806-n-removebg-preview-1.png" alt="zansti sardam institute Logo" class="app-logo">
+          <img 
+            src="https://i.ibb.co/21jpMNhw/234421810-326887782452132-7028869078528396806-n-removebg-preview-1.png" 
+            alt="zansti sardam institute Logo" 
+            class="app-logo"
+            loading="eager"
+            fetchpriority="high"
+            width="120"
+            height="120">
         </div>
         <h1 class="heading" data-i18n="heading"> zansti sardam  ai Chatbot</h1>
         <h4 class="sub-heading" data-i18n="subheading">Your intelligent assistant powered by chya luqman</h4>
@@ -40,59 +63,59 @@
       </header>
       
       <!-- Suggestions List -->
-      <ul class="suggestions">
-        <li class="suggestions-item">
+      <ul class="suggestions" role="list" aria-label="Suggested prompts">
+        <li class="suggestions-item" role="listitem" tabindex="0" aria-label="Suggest: Explain quantum computing in simple terms">
           <p class="text">Explain quantum computing in simple terms</p>
-          <span class="icon material-symbols-rounded">science</span>
+          <span class="icon material-symbols-rounded" aria-hidden="true">science</span>
         </li>
-        <li class="suggestions-item">
+        <li class="suggestions-item" role="listitem" tabindex="0" aria-label="Suggest: Got any creative ideas for a 10 year old's birthday?">
           <p class="text">Got any creative ideas for a 10 year old's birthday?</p>
-          <span class="icon material-symbols-rounded">celebration</span>
+          <span class="icon material-symbols-rounded" aria-hidden="true">celebration</span>
         </li>
-        <li class="suggestions-item">
-          <p class="text">How do I make an HTTP request in JavaScript?</p>
-          <span class="icon material-symbols-rounded">code</span>
+        <li class="suggestions-item" role="listitem" tabindex="0" aria-label="Suggest: HTTP request in JavaScript?">
+          <p class="text">HTTP request in JavaScript?</p>
+          <span class="icon material-symbols-rounded" aria-hidden="true">code</span>
         </li>
-        <li class="suggestions-item">
+        <li class="suggestions-item" role="listitem" tabindex="0" aria-label="Suggest: Write a poem about the beauty of nature">
           <p class="text">Write a poem about the beauty of nature</p>
-          <span class="icon material-symbols-rounded">nature</span>
+          <span class="icon material-symbols-rounded" aria-hidden="true">nature</span>
         </li>
-        <li class="suggestions-item">
+        <li class="suggestions-item" role="listitem" tabindex="0" aria-label="Suggest: Create a majestic dragon soaring over misty mountains">
           <p class="text">Create a majestic dragon soaring over misty mountains</p>
-          <span class="icon material-symbols-rounded">image</span>
+          <span class="icon material-symbols-rounded" aria-hidden="true">image</span>
         </li>
-        <li class="suggestions-item">
+        <li class="suggestions-item" role="listitem" tabindex="0" aria-label="Suggest: Generate a futuristic robot exploring an alien planet">
           <p class="text">Generate a futuristic robot exploring an alien planet</p>
-          <span class="icon material-symbols-rounded">rocket</span>
+          <span class="icon material-symbols-rounded" aria-hidden="true">rocket</span>
         </li>
-        <li class="suggestions-item">
+        <li class="suggestions-item" role="listitem" tabindex="0" aria-label="Suggest: Design a magical castle surrounded by enchanted forest">
           <p class="text">Design a magical castle surrounded by enchanted forest</p>
-          <span class="icon material-symbols-rounded">castle</span>
+          <span class="icon material-symbols-rounded" aria-hidden="true">castle</span>
         </li>
-        <li class="suggestions-item">
+        <li class="suggestions-item" role="listitem" tabindex="0" aria-label="Suggest: Tell me about electric vehicles and their benefits">
           <p class="text">Tell me about electric vehicles and their benefits</p>
-          <span class="icon material-symbols-rounded">electric_car</span>
+          <span class="icon material-symbols-rounded" aria-hidden="true">electric_car</span>
         </li>
-        <li class="suggestions-item">
+        <li class="suggestions-item" role="listitem" tabindex="0" aria-label="Suggest: Compare fuel efficiency of different car models">
           <p class="text">Compare fuel efficiency of different car models</p>
-          <span class="icon material-symbols-rounded">local_gas_station</span>
+          <span class="icon material-symbols-rounded" aria-hidden="true">local_gas_station</span>
         </li>
-        <li class="suggestions-item">
+        <li class="suggestions-item" role="listitem" tabindex="0" aria-label="Suggest: Calculate fuel cost for a 500-mile trip with 30 MPG at $3.50/gallon">
           <p class="text">Calculate fuel cost for a 500-mile trip with 30 MPG at $3.50/gallon</p>
-          <span class="icon material-symbols-rounded">local_gas_station</span>
+          <span class="icon material-symbols-rounded" aria-hidden="true">local_gas_station</span>
         </li>
-        <li class="suggestions-item">
+        <li class="suggestions-item" role="listitem" tabindex="0" aria-label="Suggest: Estimate insurance cost for a 5-year-old hybrid car worth $25,000">
           <p class="text">Estimate insurance cost for a 5-year-old hybrid car worth $25,000</p>
-          <span class="icon material-symbols-rounded">account_balance</span>
+          <span class="icon material-symbols-rounded" aria-hidden="true">account_balance</span>
         </li>
-        <li class="suggestions-item">
+        <li class="suggestions-item" role="listitem" tabindex="0" aria-label="Suggest: Compare environmental impact of gas vs electric vehicles for 1000 miles">
           <p class="text">Compare environmental impact of gas vs electric vehicles for 1000 miles</p>
-          <span class="icon material-symbols-rounded">eco</span>
+          <span class="icon material-symbols-rounded" aria-hidden="true">eco</span>
         </li>
       </ul>
       
       <!-- Chats -->
-      <div class="chats-container"></div>
+      <div class="chats-container" role="log" aria-live="polite" aria-label="Chat messages" aria-atomic="false"></div>
       
       <!-- Prompt Input -->
       <div class="prompt-container">
@@ -122,7 +145,9 @@
               <button id="send-prompt-btn" class="material-symbols-rounded" title="Send message" aria-label="Send message">send</button>
             </div>
           </form>
-          <!-- Theme and Delete Chats Buttons -->
+          <!-- Theme and Control Buttons -->
+          <button id="voice-input-btn" class="material-symbols-rounded" title="Voice input" aria-label="Start voice input">mic</button>
+          <button id="export-chats-btn" class="material-symbols-rounded" title="Export chat history" aria-label="Export chat history">download</button>
           <button id="theme-toggle-btn" class="material-symbols-rounded" title="Toggle theme" aria-label="Toggle dark/light theme">dark_mode</button>
           <button id="delete-chats-btn" class="material-symbols-rounded" title="Clear chat" aria-label="Clear chat history">delete</button>
         </div>
@@ -209,7 +234,14 @@
     <div id="initial-loader" class="loading-overlay">
       <div class="loading-content">
         <div class="loading-logo-container">
-          <img src="https://i.ibb.co/21jpMNhw/234421810-326887782452132-7028869078528396806-n-removebg-preview-1.png" alt="zansti sardam institute Logo" class="loading-logo">
+          <img 
+            src="https://i.ibb.co/21jpMNhw/234421810-326887782452132-7028869078528396806-n-removebg-preview-1.png" 
+            alt="zansti sardam institute Logo" 
+            class="loading-logo"
+            loading="eager"
+            fetchpriority="high"
+            width="100"
+            height="100">
         </div>
         <div class="loading-spinner">
           <div class="spinner"></div>
